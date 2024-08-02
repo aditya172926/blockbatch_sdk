@@ -1,0 +1,4 @@
+const BATCH_CONTRACT_ADDRESS = "";
+const CHAIN_ID = 1;
+
+export default {BATCH_CONTRACT_ADDRESS, CHAIN_ID}
