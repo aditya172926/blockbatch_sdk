@@ -1,6 +1,7 @@
 // module to execute batch transactions
 import { abi } from "./abi/BatchTransferContract.abi";
-import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY } from "./constants";
+import { erc20Abi } from "./abi/Token.abi";
+import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "./constants";
 import { ERC20Batch, EthBatch, Initializer, Transaction } from "./types";
 import { ethers } from "ethers";
 
@@ -110,19 +111,31 @@ export class BatchTransaction {
         let recipients = [];
         let amounts = [];
         let tokens = [];
-
+        let totalAmount = BigInt(0);
         for (let batch of batchData) {
             recipients.push(batch.recipient);
-            amounts.push(ethers.parseUnits(batch.amount, 18));
+            amounts.push(BigInt(batch.amount));
             tokens.push(batch.tokenAddress);
+            totalAmount += BigInt(batch.amount);
         }
+
+        const erc20Contract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, erc20Abi, this.signer);
+        const approval = await erc20Contract.approve(BATCH_CONTRACT_ADDRESS, totalAmount);
+        console.log(approval);
+        const address = await this.signer?.getAddress();
+        const allowance = await erc20Contract.allowance(address, BATCH_CONTRACT_ADDRESS);
+        console.log("Allowance ", allowance);
 
         const txn = await this.batchContract.batchTransferMultiTokens(
             tokens,
             recipients,
-            amounts
+            amounts,
+            {gasLimit: 300000}
         );
         console.log("ERC20 transaction ", txn);
+        if (txn.hash)
+            return true;
+        return false;
     }
 
     estimateBatchGas = async (transactions: Transaction[]) => {

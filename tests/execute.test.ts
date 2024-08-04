@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
-import { PRIVATE_KEY } from "../src/constants";
+import { PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "../src/constants";
 import { BatchTransaction } from "../src/execute";
-import { EthBatch, Transaction } from "../src/types";
+import { ERC20Batch, EthBatch, Transaction } from "../src/types";
 
 describe("setup", () => {
     const wallet = new ethers.Wallet(PRIVATE_KEY);
@@ -32,7 +32,7 @@ describe("setup", () => {
     });
 });
 
-describe("executeBatch", () => {
+describe("executeEthBatch", () => {
     const ethBatch: EthBatch[] = [
         {
             recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
@@ -54,4 +54,28 @@ describe("executeBatch", () => {
         console.log(res);
         expect(await batchTxn.executeEthBatch(ethBatch)).toBe(signer.address);
     })
+});
+
+describe("executeERC20Batch", () => {
+    const erc20Batch: ERC20Batch[] =  [
+        {
+            recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            amount: "10",
+            tokenAddress: TOKEN_CONTRACT_ADDRESS
+        },
+        {
+            recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            amount: "100",
+            tokenAddress: TOKEN_CONTRACT_ADDRESS
+        }
+    ]
+    test('should return true if successful', async() => {
+        const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+        const signer = await provider.getSigner();
+        const batchTxn = new BatchTransaction();
+        const res = await batchTxn.init({
+            signer
+        });
+        expect(await batchTxn.executeERC20Batch(erc20Batch)).toBe(true);
+    });
 });
