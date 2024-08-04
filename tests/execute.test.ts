@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
-import { PRIVATE_KEY } from "../src/constants";
+import { PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "../src/constants";
 import { BatchTransaction } from "../src/execute";
-import { Transaction } from "../src/types";
+import { BatchTransactionInterface, Transaction } from "../src/types";
 
 describe("setup", () => {
     const wallet = new ethers.Wallet(PRIVATE_KEY);
@@ -34,7 +34,7 @@ describe("setup", () => {
 
 describe("executeBatch", () => {
     const addresses = ["0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"];
-    const amounts = [ethers.parseEther("10"), ethers.parseEther("100")];
+    const amounts = [BigInt(1000000000000), BigInt(1000000000000)];
 
     test('should return the connected wallet address', async () => {
         const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
@@ -44,6 +44,31 @@ describe("executeBatch", () => {
             signer
         });
         console.log(res);
-        expect(await batchTxn.executeBatch(addresses, amounts)).toBe(signer.address);
+        const txnData: BatchTransactionInterface[] = [
+            {
+                amount: "10",
+                recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+                token: TOKEN_CONTRACT_ADDRESS
+            },
+            {
+                amount: "100",
+                recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                token: TOKEN_CONTRACT_ADDRESS
+            }
+        ]
+        expect(await batchTxn.executeBatch(txnData)).toBe(signer.address);
     })
 });
+
+describe("fetch balance", () => {
+    const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
+    test("return erc20 balance of address", async() => {
+        const signer = await provider.getSigner(0);
+        const batch = new BatchTransaction();
+        const setup = await batch.setup({
+            signer
+        });
+        const balance = await batch.getBalance(signer.address);
+        expect(balance).toBe(BigInt("1000000"));
+    });
+})
