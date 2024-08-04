@@ -1,19 +1,9 @@
 // module to execute batch transactions
+import { ethers } from "ethers";
 import { abi } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
-import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "./constants";
-import { ERC20Batch, EthBatch, Initializer, Transaction } from "./types";
-import { ethers } from "ethers";
-
-/**
- * 
- * Transaction cases
- * sending native token - achieved
- * sending erc20 tokens
- * calling an external smart contract function
- * 
- * TODO: Differentiate between such calls and generate transaction data
- */
+import { BATCH_CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS } from "./constants";
+import { ERC20Batch, EthBatch, Initializer } from "./types";
 
 declare global {
     interface Window {
@@ -96,7 +86,15 @@ export class BatchTransaction {
         }
 
         const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-        const txn = await batchContract.batchTransfer(recipients, amounts, { value: totalAmount });
+        const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
+        const estimatedGas = await this.estimateBatchGas(txnData);
+        console.log("estimated gas ", estimatedGas);
+        const txn = await this.signer.sendTransaction({
+            to: txnData.to,
+            data: txnData.data,
+            value: txnData.value,
+            gasLimit: estimatedGas
+        });
         console.log("Transaction ", txn);
         console.log(await this.provider.getBalance(await this.signer.getAddress()),
             await this.provider.getBalance(recipients[0]),
@@ -119,26 +117,37 @@ export class BatchTransaction {
             totalAmount += BigInt(batch.amount);
         }
 
-        const erc20Contract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, erc20Abi, this.signer);
-        const approval = await erc20Contract.approve(BATCH_CONTRACT_ADDRESS, totalAmount);
-        console.log(approval);
-        const address = await this.signer?.getAddress();
-        const allowance = await erc20Contract.allowance(address, BATCH_CONTRACT_ADDRESS);
+        const allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
         console.log("Allowance ", allowance);
 
-        const txn = await this.batchContract.batchTransferMultiTokens(
+        const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
             tokens,
             recipients,
             amounts,
-            {gasLimit: 300000}
         );
+        const estimatedGas = await this.estimateBatchGas(txnData);
+        const txn = await this.signer?.sendTransaction({
+            to: txnData.to,
+            data: txnData.data,
+            value: txnData.value,
+            gasLimit: estimatedGas
+        })
         console.log("ERC20 transaction ", txn);
-        if (txn.hash)
+        if (txn?.hash)
             return true;
         return false;
     }
 
-    estimateBatchGas = async (transactions: Transaction[]) => {
+    private async erc20Approval(token: string, spender: string, amount: BigInt) {
+        const erc20Contract = new ethers.Contract(token, erc20Abi, this.signer);
+        const approval = await erc20Contract.approve(spender, amount);
+        const address = await this.signer?.getAddress();
+        const allowance = await erc20Contract.allowance(address, spender);
+        return allowance;
+    }
 
+    private async estimateBatchGas(transactionData: ethers.ContractTransaction) {
+        const estimatedGas = await this.signer?.estimateGas(transactionData);
+        return estimatedGas;
     }
 }
