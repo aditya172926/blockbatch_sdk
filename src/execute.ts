@@ -98,6 +98,7 @@ export class BatchTransaction {
             }
         }
         let totalNativeAmt = BigInt(0);
+        let totalERC20Amt = BigInt(0);
         for (let txnData of batchTxn) {
             if (txnData.token === ethers.ZeroAddress || !txnData.token) {
                 tokenDistribution.native.recipients.push(txnData.recipient);
@@ -107,9 +108,16 @@ export class BatchTransaction {
                 tokenDistribution.erc20.recipients.push(txnData.recipient);
                 tokenDistribution.erc20.amounts.push(BigInt(txnData.amount));
                 tokenDistribution.erc20.tokenAddresses.push(txnData.token);
+                totalERC20Amt += BigInt(txnData.amount);
             }
         }
+        const allowance = await this.erc20Approval(BATCH_CONTRACT_ADDRESS, totalERC20Amt, TOKEN_CONTRACT_ADDRESS);
+        const allowance2 = await this.erc20Approval(BATCH_ADDRESS, totalERC20Amt, TOKEN_CONTRACT_ADDRESS);
+
+        console.log("Allowances ", allowance, allowance2);
+
         const batchContract = new ethers.Contract(this.batchContractAddress, this.batchContractAbi, this.signer);
+
         const ethTxnData = await batchContract.batchTransfer.populateTransaction(
             tokenDistribution.native.recipients,
             tokenDistribution.native.amounts,
@@ -119,42 +127,46 @@ export class BatchTransaction {
         const erc20TxnData = await batchContract.batchTransferMultiTokens.populateTransaction(
             tokenDistribution.erc20.tokenAddresses,
             tokenDistribution.erc20.recipients,
-            tokenDistribution.erc20.amounts, 
-            {value: BigInt(0)}
+            tokenDistribution.erc20.amounts,
+            { value: BigInt(0), gasLimit: 300000 }
         );
-
         console.log({
             "ETH Transaction Data": ethTxnData,
             "ERC20 TransactionData": erc20TxnData
         });
 
-        const batch = new ethers.Contract(BATCH_ADDRESS, batch_contract_abi, this.signer);
-
         let payloadData = [];
         let to = [];
         let values = [];
-        let totalValue = BigInt(0);
-        for (let data of [erc20TxnData]) {
-            payloadData.push(data.data);
-            to.push(data.to);
-            values.push(data.value);
-            totalValue += data.value ? data.value : BigInt(0);
+        for (let data of [ethTxnData, erc20TxnData]) {
+            if (data.data) {
+                payloadData.push(data.data);
+                to.push(data.to);
+                values.push(data.value);
+            }
         }
         console.log(payloadData, to, values);
 
-        // const txn = await batch.sendBatchTransactions(
-        //     payloadData,
-        //     to,
-        //     values,
-        //     { value: totalValue }
-        // );
+        // Try sending sender as a param instead of msg.sender in the smart contract
+        const batch = new ethers.Contract(BATCH_ADDRESS, batch_contract_abi, this.signer);
+        const txn = await batch.sendBatchTransactions(
+            payloadData,
+            to,
+            values,
+            { value: totalNativeAmt, gasLimit: 300000 }
+        );
         // const txn = await this.signer.sendTransaction({
         //     to: BATCH_ADDRESS,
         //     data: temp,
         //     value: txnData.value
         // });
         console.log(tokenDistribution.erc20.tokenAddresses, tokenDistribution.erc20.recipients, tokenDistribution.erc20.amounts)
-        const txn = await batchContract.batchTransferMultiTokens(tokenDistribution.erc20.tokenAddresses, tokenDistribution.erc20.recipients, tokenDistribution.erc20.amounts, {gasLimit: 3000000});
+        // const txn = await batchContract.batchTransferMultiTokens(
+        //     tokenDistribution.erc20.tokenAddresses, 
+        //     tokenDistribution.erc20.recipients, 
+        //     tokenDistribution.erc20.amounts, 
+        //     {gasLimit: 3000000}
+        // );
         console.log("Transaction ", txn);
         console.table({
             "account0": (await this.provider.getBalance(await this.signer.getAddress())).toString(),
@@ -171,6 +183,14 @@ export class BatchTransaction {
 
     async estimateBatchGas(transactions: Transaction[]) {
 
+    }
+
+    private async erc20Approval(spender: string, amount: BigInt, token: string): Promise<BigInt> {
+        const erc20Contract = new ethers.Contract(token, Token_abi, this.signer);
+        const approval = await erc20Contract.approve(spender, amount);
+        const userAddress = await this.signer?.getAddress();
+        const allowance = await erc20Contract.allowance(userAddress, spender);
+        return allowance;
     }
 
     private async fetchContractABI(contractAddress: string) {
