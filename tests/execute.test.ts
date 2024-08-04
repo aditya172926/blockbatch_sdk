@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { PRIVATE_KEY } from "../src/constants";
 import { BatchTransaction } from "../src/execute";
-import { Transaction } from "../src/types";
+import { EthBatch, Transaction } from "../src/types";
 
 describe("setup", () => {
     const wallet = new ethers.Wallet(PRIVATE_KEY);
@@ -33,8 +33,16 @@ describe("setup", () => {
 });
 
 describe("executeBatch", () => {
-    const addresses = ["0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"];
-    const amounts = [ethers.parseEther("10"), ethers.parseEther("100")];
+    const ethBatch: EthBatch[] = [
+        {
+            recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+            amount: "10"
+        },
+        {
+            recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            amount: "100"
+        }
+    ]
 
     test('should return the connected wallet address', async () => {
         const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
@@ -44,6 +52,6 @@ describe("executeBatch", () => {
             signer
         });
         console.log(res);
-        expect(await batchTxn.executeBatch(addresses, amounts)).toBe(signer.address);
+        expect(await batchTxn.executeEthBatch(ethBatch)).toBe(signer.address);
     })
 });

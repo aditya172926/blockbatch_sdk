@@ -1,7 +1,7 @@
 // module to execute batch transactions
 import { abi } from "./abi/BatchTransferContract.abi";
 import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY } from "./constants";
-import { Initializer, Transaction } from "./types";
+import { EthBatch, Initializer, Transaction } from "./types";
 import { ethers } from "ethers";
 
 /**
@@ -69,18 +69,32 @@ export class BatchTransaction {
         }
     }
 
-    async executeBatch(addresses: string[], amounts: BigInt[]): Promise<string> {
+    async executeEthBatch(batchData: EthBatch[]): Promise<string> {
         if (!this.signer || !this.provider) {
             return "Either provider or signer not set"
         }
+
+        let recipients = [];
+        let amounts = [];
+        let totalAmount = BigInt(0);
+        for (let batch of batchData) {
+            recipients.push(batch.recipient);
+            amounts.push(ethers.parseEther(batch.amount));
+            totalAmount += ethers.parseEther(batch.amount);
+        }
+
         const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-        const txn = await batchContract.batchTransfer(addresses, amounts, { value: ethers.parseEther("110") });
+        const txn = await batchContract.batchTransfer(recipients, amounts, { value: ethers.parseEther("110") });
         console.log("Transaction ", txn);
         console.log(await this.provider.getBalance(await this.signer.getAddress()),
-            await this.provider.getBalance(addresses[0]),
-            await this.provider.getBalance(addresses[1])
+            await this.provider.getBalance(recipients[0]),
+            await this.provider.getBalance(recipients[1])
         );
         return await this.signer.getAddress();
+    }
+
+    async executeERC20Batch() {
+
     }
 
     estimateBatchGas = async (transactions: Transaction[]) => {

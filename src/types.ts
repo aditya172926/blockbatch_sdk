@@ -11,3 +11,12 @@ export interface Initializer {
     signer?: ethers.Signer,
     private_key?: string
 }
+
+export interface EthBatch {
+    recipient: string,
+    amount: string
+}
+
+export interface ERC20Batch extends EthBatch {
+    tokenAddress: string
+}
