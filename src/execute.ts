@@ -1,7 +1,8 @@
 // module to execute batch transactions
 import { abi } from "./abi/BatchTransferContract.abi";
-import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY } from "./constants";
-import { EthBatch, Initializer, Transaction } from "./types";
+import { erc20Abi } from "./abi/Token.abi";
+import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "./constants";
+import { ERC20Batch, EthBatch, Initializer, Transaction } from "./types";
 import { ethers } from "ethers";
 
 /**
@@ -23,13 +24,24 @@ declare global {
 export class BatchTransaction {
     provider: ethers.Provider | null;
     signer: ethers.Signer | null;
+    batchContract: ethers.Contract | null;
 
     constructor() {
         this.provider = null;
         this.signer = null;
+        this.batchContract = null;
     }
 
-    async setup(initialize?: Initializer): Promise<boolean> {
+    async init(initialize?: Initializer) {
+        const setup = await this.setup(initialize);
+        if (setup) {
+            this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
+            return true
+        }
+        return false;
+    }
+
+    private async setup(initialize?: Initializer): Promise<boolean> {
         try {
             if (initialize) {
                 if (initialize.signer) {
@@ -84,7 +96,7 @@ export class BatchTransaction {
         }
 
         const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-        const txn = await batchContract.batchTransfer(recipients, amounts, { value: ethers.parseEther("110") });
+        const txn = await batchContract.batchTransfer(recipients, amounts, { value: totalAmount });
         console.log("Transaction ", txn);
         console.log(await this.provider.getBalance(await this.signer.getAddress()),
             await this.provider.getBalance(recipients[0]),
@@ -93,8 +105,37 @@ export class BatchTransaction {
         return await this.signer.getAddress();
     }
 
-    async executeERC20Batch() {
+    async executeERC20Batch(batchData: ERC20Batch[]) {
+        if (!this.batchContract)
+            return false;
+        let recipients = [];
+        let amounts = [];
+        let tokens = [];
+        let totalAmount = BigInt(0);
+        for (let batch of batchData) {
+            recipients.push(batch.recipient);
+            amounts.push(BigInt(batch.amount));
+            tokens.push(batch.tokenAddress);
+            totalAmount += BigInt(batch.amount);
+        }
 
+        const erc20Contract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, erc20Abi, this.signer);
+        const approval = await erc20Contract.approve(BATCH_CONTRACT_ADDRESS, totalAmount);
+        console.log(approval);
+        const address = await this.signer?.getAddress();
+        const allowance = await erc20Contract.allowance(address, BATCH_CONTRACT_ADDRESS);
+        console.log("Allowance ", allowance);
+
+        const txn = await this.batchContract.batchTransferMultiTokens(
+            tokens,
+            recipients,
+            amounts,
+            {gasLimit: 300000}
+        );
+        console.log("ERC20 transaction ", txn);
+        if (txn.hash)
+            return true;
+        return false;
     }
 
     estimateBatchGas = async (transactions: Transaction[]) => {
