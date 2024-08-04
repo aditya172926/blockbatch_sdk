@@ -29,7 +29,7 @@ export class BatchTransaction {
         this.signer = null;
     }
 
-    async setup(initialize?: Initializer) {
+    async setup(initialize?: Initializer): Promise<boolean> {
         try {
             if (initialize) {
                 if (initialize.signer) {
@@ -69,7 +69,7 @@ export class BatchTransaction {
         }
     }
 
-    executeBatch = async (addresses: string[], amounts: BigInt[]): Promise<string> => {
+    async executeBatch(addresses: string[], amounts: BigInt[]): Promise<string> {
         if (!this.signer || !this.provider) {
             return "Either provider or signer not set"
         }
@@ -82,8 +82,8 @@ export class BatchTransaction {
         );
         return await this.signer.getAddress();
     }
-}
 
-export const estimateBatchGas = async (transactions: Transaction[]) => {
+    estimateBatchGas = async (transactions: Transaction[]) => {
 
+    }
 }
