@@ -3,7 +3,7 @@ import { ethers, toBigInt } from "ethers";
 import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
 import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS } from "./constants";
-import { BatchData, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
+import { BatchData, BatchTransactionParams, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
 import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
 
 declare global {
@@ -39,7 +39,7 @@ export class BatchTransaction {
         if (setup) {
             this.batchProcessingContract = new ethers.Contract(BATCH_PROCESS_CONTRACT_ADDRESS, BATCH_PROCESS_ABI, this.signer);
             this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, BATCH_CONTRACT_ABI, this.signer);
-            return true
+            return true;
         }
         return false;
     }
@@ -124,14 +124,55 @@ export class BatchTransaction {
             };
 
             // TODO: These are 2 separate transactions. 1 for ETH and 1 for ERC20. Find a way to make it single
+            // the above todo is fixed: Test it throughly
             if (ethBatch.recipients.length > 0) {
-                const ethBatchTransaction = await this.executeEthBatch(ethBatch, totalEthAmount);
-                response["eth"] = ethBatchTransaction;
+                const ethBatchTransactionData = await this.executeEthBatch(ethBatch, totalEthAmount);
+                response["eth"] = ethBatchTransactionData;
             }
             if (erc20Batch.recipients.length > 0) {
-                const erc20BatchTransaction = await this.executeERC20Batch(erc20Batch, allowanceAmount);
-                response["erc20"] = erc20BatchTransaction;
+                const erc20BatchTransactionData = await this.executeERC20Batch(erc20Batch, allowanceAmount);
+                response["erc20"] = erc20BatchTransactionData;
             }
+            /**
+             * Requirements to send batch transaction
+             * erc20, eth batch txn data
+             * contract address to send the txn to
+             * values of eth to send with the txn
+             */
+
+            // const totalEthValue = BigInt(response.erc20?.value!) + BigInt(response.eth?.value!);
+            let totalEthValue = BigInt(0);
+            let batchTxnParams: BatchTransactionParams = {
+                data: [],
+                values: [],
+                to: []
+            }
+        
+            if (response.erc20) {
+                batchTxnParams.data.push(response.erc20.data);
+                batchTxnParams.values.push(response.erc20.value ? response.erc20.value : BigInt(0))
+                batchTxnParams.to.push(response.erc20.to);
+                totalEthValue += response.erc20.value ? response.erc20.value : BigInt(0);
+            }
+
+            if (response.eth) {
+                batchTxnParams.data.push(response.eth.data);
+                batchTxnParams.values.push(response.eth.value ? response.eth.value : BigInt(0))
+                batchTxnParams.to.push(response.eth.to);
+                totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
+            }
+
+            console.log("Response transaction data ", batchTxnParams);
+
+            const txn = await this.batchContract?.sendBatchTransactions(
+                batchTxnParams.data,
+                batchTxnParams.to,
+                batchTxnParams.values,
+                {value: totalEthValue}
+            );
+
+            console.log("Transaction ==> ", txn);
+
             return response;
 
         } catch (error: any) {
@@ -140,7 +181,7 @@ export class BatchTransaction {
 
     }
 
-    async executeEthBatch(ethBatch: ETHBatch, totalEthAmount: BigInt): Promise<ethers.TransactionResponse> {
+    async executeEthBatch(ethBatch: ETHBatch, totalEthAmount: BigInt): Promise<ethers.ContractTransaction> {
         if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
@@ -150,10 +191,10 @@ export class BatchTransaction {
 
             const txnData = await this.batchProcessingContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
             const estimatedGas = await this.estimateBatchGas(txnData);
-
-            const txn = await this.sendTransaction(txnData, estimatedGas);
-            if (txn.hash)
-                return txn;
+            return txnData;
+            // const txn = await this.sendTransaction(txnData, estimatedGas);
+            // if (txn.hash)
+            //     return txn;
             throw new Error("Transaction failed ");
         } catch (error: any) {
             throw new Error(error);
@@ -161,7 +202,7 @@ export class BatchTransaction {
 
     }
 
-    async executeERC20Batch(erc20Batch: ERC20Batch, allowanceAmount: TokenAllowance): Promise<ethers.TransactionResponse> {
+    async executeERC20Batch(erc20Batch: ERC20Batch, allowanceAmount: TokenAllowance): Promise<ethers.ContractTransaction> {
         if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
@@ -169,16 +210,20 @@ export class BatchTransaction {
                 const _allowance = await this.erc20Approval(key, BATCH_PROCESS_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
             }
 
+            const spender = await this.signer?.getAddress();
+
             const txnData = await this.batchProcessingContract.batchTransferMultiTokens.populateTransaction(
                 erc20Batch.tokens,
                 erc20Batch.recipients,
                 erc20Batch.amounts,
+                spender
             );
 
             const estimatedGas = await this.estimateBatchGas(txnData);
-            const txn = await this.sendTransaction(txnData, estimatedGas)
-            if (txn)
-                return txn;
+            return txnData;
+            // const txn = await this.sendTransaction(txnData, estimatedGas)
+            // if (txn)
+            //     return txn;
             throw new Error("Transaction failed");
         } catch (error: any) {
             throw new Error(error);
