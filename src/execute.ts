@@ -109,7 +109,6 @@ export class BatchTransaction {
             let recipients = [];
             let amounts = [];
             let tokens = [];
-            let totalAmount = BigInt(0);
             let allowanceAmount: TokenAllowance = {};
             for (let batch of batchData) {
                 if (!ethers.isAddress(batch.recipient))
@@ -117,14 +116,16 @@ export class BatchTransaction {
                 recipients.push(batch.recipient);
                 amounts.push(BigInt(batch.amount));
                 tokens.push(batch.tokenAddress);
-                // totalAmount += BigInt(batch.amount);
-                allowanceAmount[batch.tokenAddress] += allowanceAmount[batch.tokenAddress] ? toBigInt(batch.amount) : toBigInt(0)
+                if (allowanceAmount[batch.tokenAddress]) {
+                    allowanceAmount[batch.tokenAddress] += BigInt(batch.amount);
+                } else {
+                    allowanceAmount[batch.tokenAddress] = BigInt(batch.amount);
+                }
             }
 
             for (let key in allowanceAmount) {
                 const _allowance = await this.erc20Approval(key, BATCH_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
             }
-            // const _allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
 
             const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
                 tokens,
