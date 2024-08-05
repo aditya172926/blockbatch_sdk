@@ -70,6 +70,8 @@ export class BatchTransaction {
     }
 
     async executeEthBatch(batchData: EthBatch[]): Promise<ethers.TransactionResponse | Error> {
+        if (!this.batchContract)
+            throw new Error("SDK not initialized properly. Call init() method");
         try {
             if (!this.signer || !this.provider) {
                 throw new Error("Either provider or signer not set");
@@ -79,6 +81,8 @@ export class BatchTransaction {
             let amounts = [];
             let totalAmount = BigInt(0);
             for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
                 recipients.push(batch.recipient);
                 amounts.push(ethers.parseEther(batch.amount));
                 totalAmount += ethers.parseEther(batch.amount);
@@ -107,13 +111,15 @@ export class BatchTransaction {
             let tokens = [];
             let totalAmount = BigInt(0);
             for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
                 recipients.push(batch.recipient);
                 amounts.push(BigInt(batch.amount));
                 tokens.push(batch.tokenAddress);
                 totalAmount += BigInt(batch.amount);
             }
 
-            const allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
+            const _allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
 
             const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
                 tokens,
@@ -148,7 +154,7 @@ export class BatchTransaction {
         } catch (error) {
             return BigInt(300000);
         }
-        
+
     }
 
     private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint): Promise<ethers.TransactionResponse> {
@@ -162,8 +168,8 @@ export class BatchTransaction {
             if (txn?.hash)
                 return txn;
             throw new Error("Transaction Failed")
-        } catch(error: any) {
+        } catch (error: any) {
             throw new Error(error);
-        }  
+        }
     }
 }
