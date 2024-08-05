@@ -1,9 +1,9 @@
 // module to execute batch transactions
-import { ethers } from "ethers";
+import { ethers, toBigInt } from "ethers";
 import { abi } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
 import { BATCH_CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS } from "./constants";
-import { ERC20Batch, EthBatch, Initializer } from "./types";
+import { ERC20Batch, EthBatch, Initializer, TokenAllowance } from "./types";
 
 declare global {
     interface Window {
@@ -109,17 +109,23 @@ export class BatchTransaction {
             let recipients = [];
             let amounts = [];
             let tokens = [];
-            let totalAmount = BigInt(0);
+            let allowanceAmount: TokenAllowance = {};
             for (let batch of batchData) {
                 if (!ethers.isAddress(batch.recipient))
                     throw new Error(`Invalid recipient address provided ${batch.recipient}`);
                 recipients.push(batch.recipient);
                 amounts.push(BigInt(batch.amount));
                 tokens.push(batch.tokenAddress);
-                totalAmount += BigInt(batch.amount);
+                if (allowanceAmount[batch.tokenAddress]) {
+                    allowanceAmount[batch.tokenAddress] += BigInt(batch.amount);
+                } else {
+                    allowanceAmount[batch.tokenAddress] = BigInt(batch.amount);
+                }
             }
 
-            const _allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
+            for (let key in allowanceAmount) {
+                const _allowance = await this.erc20Approval(key, BATCH_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
+            }
 
             const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
                 tokens,
@@ -138,11 +144,15 @@ export class BatchTransaction {
     }
 
     private async erc20Approval(token: string, spender: string, amount: BigInt) {
-        const erc20Contract = new ethers.Contract(token, erc20Abi, this.signer);
-        const approval = await erc20Contract.approve(spender, amount);
-        const address = await this.signer?.getAddress();
-        const allowance = await erc20Contract.allowance(address, spender);
-        return allowance;
+        try {
+            const erc20Contract = new ethers.Contract(token, erc20Abi, this.signer);
+            const approval = await erc20Contract.approve(spender, amount);
+            const address = await this.signer?.getAddress();
+            const allowance = await erc20Contract.allowance(address, spender);
+            return allowance;
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     private async estimateBatchGas(transactionData: ethers.ContractTransaction) {
