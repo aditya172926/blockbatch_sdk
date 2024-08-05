@@ -144,8 +144,11 @@ export class BatchTransaction {
                 throw new Error("Either provider or signer not set");
             }
 
-            const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-            const txnData = await batchContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
+            const txnData = await this.batchContract.batchTransfer.populateTransaction(
+                ethBatch.recipients, 
+                ethBatch.amounts, 
+                { value: totalEthAmount }
+            );
             const estimatedGas = await this.estimateBatchGas(txnData);
 
             const txn = await this.sendTransaction(txnData, estimatedGas);
