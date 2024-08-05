@@ -12,13 +12,19 @@ export interface Initializer {
     private_key?: string
 }
 
-export interface EthBatch {
+export interface BatchData {
     recipient: string,
-    amount: string
+    amount: string,
+    tokenAddress?: string
 }
 
-export interface ERC20Batch extends EthBatch {
-    tokenAddress: string
+export interface ETHBatch {
+    recipients: string[],
+    amounts: BigInt[]
+}
+
+export interface ERC20Batch extends ETHBatch {
+    tokens: string[]
 }
 
 export interface TokenAllowance {
