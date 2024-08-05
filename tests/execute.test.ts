@@ -19,32 +19,32 @@ describe("init", () => {
 
     test("sending provider-less signer, should throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ signer: wallet })).rejects.toThrow("Provider not found in Signer or Params");
+        await expect(batch.init({ signer: wallet })).rejects.toThrow("Provider not found in Signer or Params");
     });
 
     test("sending only private key, throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ private_key: PRIVATE_KEY })).rejects.toThrow("Provider not found. Send Provider object with Private Key");
+        await expect(batch.init({ private_key: PRIVATE_KEY })).rejects.toThrow("Provider not found. Send Provider object with Private Key");
     });
 
     test("sending only provider, should throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ provider })).rejects.toThrow("Cannot send only provider. Send either a Private key or Signer as well");
+        await expect(batch.init({ provider })).rejects.toThrow("Cannot send only provider. Send either a Private key or Signer as well");
     });
 
     test("sending no initializers, should throw an error in Node env", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init()).rejects.toThrow("ReferenceError: window is not defined");
+        await expect(batch.init()).rejects.toThrow("ReferenceError: window is not defined");
     });
 
     test("sending private key & provider, return true", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ private_key: PRIVATE_KEY, provider })).resolves.toBe(true);
+        await expect(batch.init({ private_key: PRIVATE_KEY, provider })).resolves.toBe(true);
     });
 
     test("sending signer & provider, return true", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ signer: wallet, provider })).resolves.toBe(true);
+        await expect(batch.init({ signer: wallet, provider })).resolves.toBe(true);
     });
 });
 

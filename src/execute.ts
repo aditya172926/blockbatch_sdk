@@ -34,7 +34,7 @@ export class BatchTransaction {
         this.batchContract = null;
     }
 
-    async init(initialize?: Initializer) {
+    async init(initialize?: Initializer): Promise<boolean> {
         const setup = await this.setup(initialize);
         if (setup) {
             this.batchProcessingContract = new ethers.Contract(BATCH_PROCESS_CONTRACT_ADDRESS, BATCH_PROCESS_ABI, this.signer);
