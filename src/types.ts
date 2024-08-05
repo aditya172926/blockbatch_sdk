@@ -20,3 +20,7 @@ export interface EthBatch {
 export interface ERC20Batch extends EthBatch {
     tokenAddress: string
 }
+
+export interface TokenAllowance {
+    [key: string]: bigint
+}
