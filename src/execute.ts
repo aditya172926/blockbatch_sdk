@@ -3,7 +3,7 @@ import { ethers, toBigInt } from "ethers";
 import { abi } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
 import { BATCH_CONTRACT_ADDRESS } from "./constants";
-import { BatchData, ERC20Batch, ETHBatch, Initializer, TokenAllowance } from "./types";
+import { BatchData, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
 
 declare global {
     interface Window {
@@ -78,47 +78,61 @@ export class BatchTransaction {
         }
     }
 
-    async processBatchTransactions(batchData: BatchData[]) {
-        let ethBatch: ETHBatch = {
-            recipients: [],
-            amounts: []
-        };
-        let erc20Batch: ERC20Batch = {
-            recipients: [],
-            amounts: [],
-            tokens: []
-        };
+    async processBatchTransactions(batchData: BatchData[]): Promise<ProcessedBatch> {
+        try {
+            let ethBatch: ETHBatch = {
+                recipients: [],
+                amounts: []
+            };
+            let erc20Batch: ERC20Batch = {
+                recipients: [],
+                amounts: [],
+                tokens: []
+            };
 
-        let totalEthAmount = BigInt(0);
-        let allowanceAmount: TokenAllowance = {};
+            let totalEthAmount = BigInt(0);
+            let allowanceAmount: TokenAllowance = {};
 
-        for (let batch of batchData) {
-            if (!ethers.isAddress(batch.recipient))
-                throw new Error(`Invalid recipient address passed ${batch.recipient}`);
-            if (batch.tokenAddress) { // batching erc20
-                if (!ethers.isAddress(batch.tokenAddress))
-                    throw new Error(`Invalid token address passed ${batch.tokenAddress}`);
-                erc20Batch.recipients.push(batch.recipient);
-                erc20Batch.amounts.push(BigInt(batch.amount));
-                erc20Batch.recipients.push(batch.recipient);
-                if (allowanceAmount[batch.tokenAddress!]) {
-                    allowanceAmount[batch.tokenAddress!] += BigInt(batch.amount);
-                } else {
-                    allowanceAmount[batch.tokenAddress!] = BigInt(batch.amount);
+            for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+                if (batch.tokenAddress) { // batching erc20
+                    if (!ethers.isAddress(batch.tokenAddress))
+                        throw new Error(`Invalid token address provided ${batch.tokenAddress}`);
+                    erc20Batch.recipients.push(batch.recipient);
+                    erc20Batch.amounts.push(BigInt(batch.amount));
+                    erc20Batch.tokens.push(batch.tokenAddress);
+                    if (allowanceAmount[batch.tokenAddress!]) {
+                        allowanceAmount[batch.tokenAddress!] += BigInt(batch.amount);
+                    } else {
+                        allowanceAmount[batch.tokenAddress!] = BigInt(batch.amount);
+                    }
+                } else { // batching eth
+                    ethBatch.recipients.push(batch.recipient);
+                    ethBatch.amounts.push(ethers.parseEther(batch.amount));
+                    totalEthAmount += ethers.parseEther(batch.amount);
                 }
-            } else { // batching eth
-                ethBatch.recipients.push(batch.recipient);
-                ethBatch.amounts.push(ethers.parseEther(batch.amount));
-                totalEthAmount += ethers.parseEther(batch.amount);
             }
-        }
 
-        let ethBatchTransaction: ethers.TransactionResponse;
-        let erc20BatchTransaction: ethers.TransactionResponse;
-        if (ethBatch.recipients.length > 0)
-            ethBatchTransaction = await this.executeEthBatch(ethBatch, totalEthAmount);
-        if (erc20Batch.recipients.length > 0)
-            erc20BatchTransaction = await this.executeERC20Batch(erc20Batch, allowanceAmount);
+            let response: ProcessedBatch = {
+                erc20: null,
+                eth: null
+            };
+
+            // TODO: These are 2 separate transactions. 1 for ETH and 1 for ERC20. Find a way to make it single
+            if (ethBatch.recipients.length > 0) {
+                const ethBatchTransaction = await this.executeEthBatch(ethBatch, totalEthAmount);
+                response["eth"] = ethBatchTransaction;
+            }
+            if (erc20Batch.recipients.length > 0) {
+                const erc20BatchTransaction = await this.executeERC20Batch(erc20Batch, allowanceAmount);
+                response["erc20"] = erc20BatchTransaction;
+            }
+            return response;
+
+        } catch (error: any) {
+            throw new Error(error);
+        }
 
     }
 
@@ -148,23 +162,6 @@ export class BatchTransaction {
         if (!this.batchContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
-            // let recipients = [];
-            // let amounts = [];
-            // let tokens = [];
-            // let allowanceAmount: TokenAllowance = {};
-            // for (let batch of batchData) {
-            //     if (!ethers.isAddress(batch.recipient))
-            //         throw new Error(`Invalid recipient address provided ${batch.recipient}`);
-            //     recipients.push(batch.recipient);
-            //     amounts.push(BigInt(batch.amount));
-            //     tokens.push(batch.tokenAddress);
-            //     if (allowanceAmount[batch.tokenAddress!]) {
-            //         allowanceAmount[batch.tokenAddress!] += BigInt(batch.amount);
-            //     } else {
-            //         allowanceAmount[batch.tokenAddress!] = BigInt(batch.amount);
-            //     }
-            // }
-
             for (let key in allowanceAmount) {
                 const _allowance = await this.erc20Approval(key, BATCH_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
             }

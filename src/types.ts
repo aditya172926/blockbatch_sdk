@@ -30,3 +30,8 @@ export interface ERC20Batch extends ETHBatch {
 export interface TokenAllowance {
     [key: string]: bigint
 }
+
+export interface ProcessedBatch {
+    erc20: ethers.TransactionResponse | null,
+    eth: ethers.TransactionResponse | null
+}

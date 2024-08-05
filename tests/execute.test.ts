@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "../src/constants";
 import { BatchTransaction } from "../src/execute";
-import { ERC20Batch, EthBatch } from "../src/types";
+import { BatchData, ProcessedBatch } from "../src/types";
 
 async function initBatchSDK() {
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
@@ -49,7 +49,7 @@ describe("init", () => {
 });
 
 describe("executeEthBatch", () => {
-    const ethBatch: EthBatch[] = [
+    const ethBatch: BatchData[] = [
         {
             recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
             amount: "10"
@@ -62,16 +62,16 @@ describe("executeEthBatch", () => {
 
     test('should return TransactionResponse on successful ETH transfer', async () => {
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.executeEthBatch(ethBatch)).resolves.toBeInstanceOf(ethers.TransactionResponse);
+        expect(batchsdk.processBatchTransactions(ethBatch)).resolves.toHaveProperty('eth');
     });
 
     test("throw error without initializing SDK", async() => {
         const batchsdk = new BatchTransaction();
-        expect(batchsdk.executeEthBatch(ethBatch)).rejects.toThrow("SDK not initialized properly. Call init() method");
+        expect(batchsdk.processBatchTransactions(ethBatch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
     test("throw error if invalid recipient address provided", async() => {
-        const mockETHBatch: EthBatch[] =  [
+        const mockETHBatch: BatchData[] =  [
             {
                 recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be",
                 amount: "10",
@@ -82,14 +82,14 @@ describe("executeEthBatch", () => {
             }
         ]; 
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.executeEthBatch(mockETHBatch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
+        expect(batchsdk.processBatchTransactions(mockETHBatch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
     });
 
 
 });
 
 describe("executeERC20Batch", () => {
-    const erc20Batch: ERC20Batch[] =  [
+    const erc20Batch: BatchData[] =  [
         {
             recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
             amount: "10",
@@ -104,16 +104,16 @@ describe("executeERC20Batch", () => {
 
     test('should return TransactionResponse on successful ERC20 token transfer', async() => {
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.executeERC20Batch(erc20Batch)).resolves.toBeInstanceOf(ethers.TransactionResponse);
+        expect(batchsdk.processBatchTransactions(erc20Batch)).resolves.toHaveProperty('erc20');
     });
 
     test("throw error without initializing SDK", async() => {
         const batchsdk = new BatchTransaction();
-        expect(batchsdk.executeERC20Batch(erc20Batch)).rejects.toThrow("SDK not initialized properly. Call init() method");
+        expect(batchsdk.processBatchTransactions(erc20Batch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
     test("throw error if invalid recipient address provided", async() => {
-        const mockErc20Batch: ERC20Batch[] =  [
+        const mockErc20Batch: BatchData[] =  [
             {
                 recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be",
                 amount: "10",
@@ -126,6 +126,6 @@ describe("executeERC20Batch", () => {
             }
         ];
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.executeERC20Batch(mockErc20Batch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
+        expect(batchsdk.processBatchTransactions(mockErc20Batch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
     });
 });
