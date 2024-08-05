@@ -1,4 +1,4 @@
-export const abi = [
+export const BATCH_PROCESS_ABI = [
     {
         "inputs": [],
         "name": "ReentrancyGuardReentrantCall",

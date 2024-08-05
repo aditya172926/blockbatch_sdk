@@ -1,9 +1,10 @@
 // module to execute batch transactions
 import { ethers, toBigInt } from "ethers";
-import { abi } from "./abi/BatchTransferContract.abi";
+import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
-import { BATCH_CONTRACT_ADDRESS } from "./constants";
+import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS } from "./constants";
 import { BatchData, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
+import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
 
 declare global {
     interface Window {
@@ -14,6 +15,7 @@ declare global {
 export class BatchTransaction {
     provider: ethers.Provider | null;
     signer: ethers.Signer | null;
+    batchProcessingContract: ethers.Contract | null;
     batchContract: ethers.Contract | null;
 
     /**
@@ -28,13 +30,15 @@ export class BatchTransaction {
     constructor() {
         this.provider = null;
         this.signer = null;
+        this.batchProcessingContract = null;
         this.batchContract = null;
     }
 
     async init(initialize?: Initializer) {
         const setup = await this.setup(initialize);
         if (setup) {
-            this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
+            this.batchProcessingContract = new ethers.Contract(BATCH_PROCESS_CONTRACT_ADDRESS, BATCH_PROCESS_ABI, this.signer);
+            this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, BATCH_CONTRACT_ABI, this.signer);
             return true
         }
         return false;
@@ -137,15 +141,14 @@ export class BatchTransaction {
     }
 
     async executeEthBatch(ethBatch: ETHBatch, totalEthAmount: BigInt): Promise<ethers.TransactionResponse> {
-        if (!this.batchContract)
+        if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
             if (!this.signer || !this.provider) {
                 throw new Error("Either provider or signer not set");
             }
 
-            const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-            const txnData = await batchContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
+            const txnData = await this.batchProcessingContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
             const estimatedGas = await this.estimateBatchGas(txnData);
 
             const txn = await this.sendTransaction(txnData, estimatedGas);
@@ -159,14 +162,14 @@ export class BatchTransaction {
     }
 
     async executeERC20Batch(erc20Batch: ERC20Batch, allowanceAmount: TokenAllowance): Promise<ethers.TransactionResponse> {
-        if (!this.batchContract)
+        if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
             for (let key in allowanceAmount) {
-                const _allowance = await this.erc20Approval(key, BATCH_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
+                const _allowance = await this.erc20Approval(key, BATCH_PROCESS_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
             }
 
-            const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
+            const txnData = await this.batchProcessingContract.batchTransferMultiTokens.populateTransaction(
                 erc20Batch.tokens,
                 erc20Batch.recipients,
                 erc20Batch.amounts,
