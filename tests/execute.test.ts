@@ -1,9 +1,9 @@
 import { ethers } from "ethers";
 import { PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "../src/constants";
 import { BatchTransaction } from "../src/execute";
-import { ERC20Batch, EthBatch, Transaction } from "../src/types";
+import { ERC20Batch, EthBatch } from "../src/types";
 
-describe("setup", () => {
+describe("init", () => {
     const wallet = new ethers.Wallet(PRIVATE_KEY);
     const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/");
     test("sending provider-less signer, should return false", async () => {
@@ -52,7 +52,7 @@ describe("executeEthBatch", () => {
             signer
         });
         console.log(res);
-        expect(await batchTxn.executeEthBatch(ethBatch)).toBe(signer.address);
+        expect(await batchTxn.executeEthBatch(ethBatch)).toBeInstanceOf(ethers.TransactionResponse);
     })
 });
 
@@ -76,6 +76,6 @@ describe("executeERC20Batch", () => {
         const res = await batchTxn.init({
             signer
         });
-        expect(await batchTxn.executeERC20Batch(erc20Batch)).toBe(true);
+        expect(await batchTxn.executeERC20Batch(erc20Batch)).toBeInstanceOf(ethers.TransactionResponse);
     });
 });

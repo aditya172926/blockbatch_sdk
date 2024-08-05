@@ -16,9 +16,13 @@ export class BatchTransaction {
     signer: ethers.Signer | null;
     batchContract: ethers.Contract | null;
 
-    constructor() {
+    // can we make the selection of batching contract generalize
+    // batchContractAddress: string | null;
+
+    constructor(batchContractAddress?: string) {
         this.provider = null;
         this.signer = null;
+        // this.batchContractAddress = null
         this.batchContract = null;
     }
 
@@ -71,71 +75,80 @@ export class BatchTransaction {
         }
     }
 
-    async executeEthBatch(batchData: EthBatch[]): Promise<string> {
-        if (!this.signer || !this.provider) {
-            return "Either provider or signer not set"
+    async executeEthBatch(batchData: EthBatch[]): Promise<ethers.TransactionResponse | Error> {
+        try {
+            if (!this.signer || !this.provider) {
+                throw new Error("Either provider or signer not set");
+            }
+
+            let recipients = [];
+            let amounts = [];
+            let totalAmount = BigInt(0);
+            for (let batch of batchData) {
+                recipients.push(batch.recipient);
+                amounts.push(ethers.parseEther(batch.amount));
+                totalAmount += ethers.parseEther(batch.amount);
+            }
+
+            const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
+            const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
+            const estimatedGas = await this.estimateBatchGas(txnData);
+            console.log("estimated gas ", estimatedGas);
+            const txn = await this.signer.sendTransaction({
+                to: txnData.to,
+                data: txnData.data,
+                value: txnData.value,
+                gasLimit: estimatedGas
+            });
+            console.log("Transaction ", txn);
+            if (txn.hash)
+                return txn
+            throw new Error("Transaction failed ");
+        } catch (error) {
+            console.error(error);
+            throw new Error(JSON.stringify(error));
         }
 
-        let recipients = [];
-        let amounts = [];
-        let totalAmount = BigInt(0);
-        for (let batch of batchData) {
-            recipients.push(batch.recipient);
-            amounts.push(ethers.parseEther(batch.amount));
-            totalAmount += ethers.parseEther(batch.amount);
-        }
-
-        const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-        const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
-        const estimatedGas = await this.estimateBatchGas(txnData);
-        console.log("estimated gas ", estimatedGas);
-        const txn = await this.signer.sendTransaction({
-            to: txnData.to,
-            data: txnData.data,
-            value: txnData.value,
-            gasLimit: estimatedGas
-        });
-        console.log("Transaction ", txn);
-        console.log(await this.provider.getBalance(await this.signer.getAddress()),
-            await this.provider.getBalance(recipients[0]),
-            await this.provider.getBalance(recipients[1])
-        );
-        return await this.signer.getAddress();
     }
 
-    async executeERC20Batch(batchData: ERC20Batch[]) {
-        if (!this.batchContract)
-            return false;
-        let recipients = [];
-        let amounts = [];
-        let tokens = [];
-        let totalAmount = BigInt(0);
-        for (let batch of batchData) {
-            recipients.push(batch.recipient);
-            amounts.push(BigInt(batch.amount));
-            tokens.push(batch.tokenAddress);
-            totalAmount += BigInt(batch.amount);
+    async executeERC20Batch(batchData: ERC20Batch[]): Promise<ethers.TransactionResponse | Error> {
+        try {
+            if (!this.batchContract)
+                throw new Error("SDK not initialized properly. Call init() method");
+            let recipients = [];
+            let amounts = [];
+            let tokens = [];
+            let totalAmount = BigInt(0);
+            for (let batch of batchData) {
+                recipients.push(batch.recipient);
+                amounts.push(BigInt(batch.amount));
+                tokens.push(batch.tokenAddress);
+                totalAmount += BigInt(batch.amount);
+            }
+
+            const allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
+            console.log("Allowance ", allowance);
+
+            const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
+                tokens,
+                recipients,
+                amounts,
+            );
+
+            const estimatedGas = await this.estimateBatchGas(txnData);
+            const txn = await this.signer?.sendTransaction({
+                to: txnData.to,
+                data: txnData.data,
+                value: txnData.value,
+                gasLimit: estimatedGas
+            })
+            console.log("ERC20 transaction ", txn);
+            if (txn?.hash)
+                return txn;
+            throw new Error("Transaction failed");
+        } catch (error) {
+            throw new Error(JSON.stringify(error));
         }
-
-        const allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
-        console.log("Allowance ", allowance);
-
-        const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
-            tokens,
-            recipients,
-            amounts,
-        );
-        const estimatedGas = await this.estimateBatchGas(txnData);
-        const txn = await this.signer?.sendTransaction({
-            to: txnData.to,
-            data: txnData.data,
-            value: txnData.value,
-            gasLimit: estimatedGas
-        })
-        console.log("ERC20 transaction ", txn);
-        if (txn?.hash)
-            return true;
-        return false;
     }
 
     private async erc20Approval(token: string, spender: string, amount: BigInt) {
