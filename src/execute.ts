@@ -1,19 +1,9 @@
 // module to execute batch transactions
+import { ethers } from "ethers";
 import { abi } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
-import { BATCH_CONTRACT_ADDRESS, PRIVATE_KEY, TOKEN_CONTRACT_ADDRESS } from "./constants";
-import { ERC20Batch, EthBatch, Initializer, Transaction } from "./types";
-import { ethers } from "ethers";
-
-/**
- * 
- * Transaction cases
- * sending native token - achieved
- * sending erc20 tokens
- * calling an external smart contract function
- * 
- * TODO: Differentiate between such calls and generate transaction data
- */
+import { BATCH_CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS } from "./constants";
+import { ERC20Batch, EthBatch, Initializer } from "./types";
 
 declare global {
     interface Window {
@@ -51,94 +41,135 @@ export class BatchTransaction {
                     else if (initialize.provider)
                         this.provider = initialize.provider;
                     else {
-                        console.error("Error: Provider not found in Signer or Params");
-                        return false;
+                        throw new Error("Provider not found in Signer or Params");
                     }
                 } else if (initialize.private_key) {
                     if (!initialize.provider) {
-                        console.log("Error: Must send Provider with Private Key");
-                        return false;
+                        throw new Error("Provider not found. Send Provider object with Private Key");
                     }
                     this.signer = new ethers.Wallet(initialize.private_key, initialize.provider);
                     this.provider = initialize.provider;
                 } else if (initialize.provider) {
-                    console.log("Cannot send only provider. Send either a Private key or Signer as well");
-                    return false;
+                    throw new Error("Cannot send only provider. Send either a Private key or Signer as well");
                 }
-                console.log(this.signer, this.provider);
                 return true;
-            } else if (window?.ethereum) { // browser environment
-                const provider = new ethers.BrowserProvider(window.ethereum);
-                this.signer = await provider.getSigner();
-                this.provider = this.signer.provider;
-                return true;
+            } else if (window) { // browser environment
+                if (window.ethereum) {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    this.signer = await provider.getSigner();
+                    this.provider = this.signer.provider;
+                    return true;
+                }
+                throw new Error("No ethereum object found in browser window");
             } else {
-                console.log("Error: In node environment send Params of Signer or Private Key and Provider");
-                return false;
+                throw new Error("In node environment send Params of Signer or Private Key and Provider");
             }
         } catch (error: any) {
-            throw Error(error);
+            throw new Error(error);
         }
     }
 
-    async executeEthBatch(batchData: EthBatch[]): Promise<string> {
-        if (!this.signer || !this.provider) {
-            return "Either provider or signer not set"
-        }
-
-        let recipients = [];
-        let amounts = [];
-        let totalAmount = BigInt(0);
-        for (let batch of batchData) {
-            recipients.push(batch.recipient);
-            amounts.push(ethers.parseEther(batch.amount));
-            totalAmount += ethers.parseEther(batch.amount);
-        }
-
-        const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-        const txn = await batchContract.batchTransfer(recipients, amounts, { value: totalAmount });
-        console.log("Transaction ", txn);
-        console.log(await this.provider.getBalance(await this.signer.getAddress()),
-            await this.provider.getBalance(recipients[0]),
-            await this.provider.getBalance(recipients[1])
-        );
-        return await this.signer.getAddress();
-    }
-
-    async executeERC20Batch(batchData: ERC20Batch[]) {
+    async executeEthBatch(batchData: EthBatch[]): Promise<ethers.TransactionResponse | Error> {
         if (!this.batchContract)
-            return false;
-        let recipients = [];
-        let amounts = [];
-        let tokens = [];
-        let totalAmount = BigInt(0);
-        for (let batch of batchData) {
-            recipients.push(batch.recipient);
-            amounts.push(BigInt(batch.amount));
-            tokens.push(batch.tokenAddress);
-            totalAmount += BigInt(batch.amount);
+            throw new Error("SDK not initialized properly. Call init() method");
+        try {
+            if (!this.signer || !this.provider) {
+                throw new Error("Either provider or signer not set");
+            }
+
+            let recipients = [];
+            let amounts = [];
+            let totalAmount = BigInt(0);
+            for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+                recipients.push(batch.recipient);
+                amounts.push(ethers.parseEther(batch.amount));
+                totalAmount += ethers.parseEther(batch.amount);
+            }
+
+            const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
+            const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
+            const estimatedGas = await this.estimateBatchGas(txnData);
+
+            const txn = await this.sendTransaction(txnData, estimatedGas);
+            if (txn.hash)
+                return txn
+            throw new Error("Transaction failed ");
+        } catch (error: any) {
+            throw new Error(error);
         }
 
-        const erc20Contract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, erc20Abi, this.signer);
-        const approval = await erc20Contract.approve(BATCH_CONTRACT_ADDRESS, totalAmount);
-        console.log(approval);
-        const address = await this.signer?.getAddress();
-        const allowance = await erc20Contract.allowance(address, BATCH_CONTRACT_ADDRESS);
-        console.log("Allowance ", allowance);
-
-        const txn = await this.batchContract.batchTransferMultiTokens(
-            tokens,
-            recipients,
-            amounts,
-            {gasLimit: 300000}
-        );
-        console.log("ERC20 transaction ", txn);
-        if (txn.hash)
-            return true;
-        return false;
     }
 
-    estimateBatchGas = async (transactions: Transaction[]) => {
+    async executeERC20Batch(batchData: ERC20Batch[]): Promise<ethers.TransactionResponse> {
+        if (!this.batchContract)
+            throw new Error("SDK not initialized properly. Call init() method");
+        try {
+            let recipients = [];
+            let amounts = [];
+            let tokens = [];
+            let totalAmount = BigInt(0);
+            for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+                recipients.push(batch.recipient);
+                amounts.push(BigInt(batch.amount));
+                tokens.push(batch.tokenAddress);
+                totalAmount += BigInt(batch.amount);
+            }
 
+            const _allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
+
+            const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
+                tokens,
+                recipients,
+                amounts,
+            );
+
+            const estimatedGas = await this.estimateBatchGas(txnData);
+            const txn = await this.sendTransaction(txnData, estimatedGas)
+            if (txn)
+                return txn;
+            throw new Error("Transaction failed");
+        } catch (error: any) {
+            throw new Error(error);
+        }
+    }
+
+    private async erc20Approval(token: string, spender: string, amount: BigInt) {
+        const erc20Contract = new ethers.Contract(token, erc20Abi, this.signer);
+        const approval = await erc20Contract.approve(spender, amount);
+        const address = await this.signer?.getAddress();
+        const allowance = await erc20Contract.allowance(address, spender);
+        return allowance;
+    }
+
+    private async estimateBatchGas(transactionData: ethers.ContractTransaction) {
+        try {
+            const estimatedGas = await this.signer?.estimateGas(transactionData);
+            if (estimatedGas)
+                return estimatedGas;
+            throw new Error("Gas Estimation failed");
+        } catch (error) {
+            return BigInt(300000);
+        }
+
+    }
+
+    private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint): Promise<ethers.TransactionResponse> {
+        try {
+            const txn = await this.signer?.sendTransaction({
+                to: transactionData.to,
+                data: transactionData.data,
+                value: transactionData.value,
+                gasLimit: gasLimit
+            });
+            if (txn?.hash)
+                return txn;
+            throw new Error("Transaction Failed")
+        } catch (error: any) {
+            throw new Error(error);
+        }
     }
 }
