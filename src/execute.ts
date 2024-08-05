@@ -45,33 +45,31 @@ export class BatchTransaction {
                     else if (initialize.provider)
                         this.provider = initialize.provider;
                     else {
-                        console.error("Error: Provider not found in Signer or Params");
-                        return false;
+                        throw new Error("Provider not found in Signer or Params");
                     }
                 } else if (initialize.private_key) {
                     if (!initialize.provider) {
-                        console.log("Error: Must send Provider with Private Key");
-                        return false;
+                        throw new Error("Provider not found. Send Provider object with Private Key");
                     }
                     this.signer = new ethers.Wallet(initialize.private_key, initialize.provider);
                     this.provider = initialize.provider;
                 } else if (initialize.provider) {
-                    console.log("Cannot send only provider. Send either a Private key or Signer as well");
-                    return false;
+                    throw new Error("Cannot send only provider. Send either a Private key or Signer as well");
                 }
-                console.log(this.signer, this.provider);
                 return true;
-            } else if (window?.ethereum) { // browser environment
-                const provider = new ethers.BrowserProvider(window.ethereum);
-                this.signer = await provider.getSigner();
-                this.provider = this.signer.provider;
-                return true;
+            } else if (window) { // browser environment
+                if (window.ethereum) {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    this.signer = await provider.getSigner();
+                    this.provider = this.signer.provider;
+                    return true;
+                }
+                throw new Error("No ethereum object found in browser window");
             } else {
-                console.log("Error: In node environment send Params of Signer or Private Key and Provider");
-                return false;
+                throw new Error("In node environment send Params of Signer or Private Key and Provider");
             }
         } catch (error: any) {
-            throw Error(error);
+            throw new Error(error);
         }
     }
 
@@ -93,28 +91,25 @@ export class BatchTransaction {
             const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
             const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
             const estimatedGas = await this.estimateBatchGas(txnData);
-            console.log("estimated gas ", estimatedGas);
             const txn = await this.signer.sendTransaction({
                 to: txnData.to,
                 data: txnData.data,
                 value: txnData.value,
                 gasLimit: estimatedGas
             });
-            console.log("Transaction ", txn);
             if (txn.hash)
                 return txn
             throw new Error("Transaction failed ");
         } catch (error) {
-            console.error(error);
             throw new Error(JSON.stringify(error));
         }
 
     }
 
-    async executeERC20Batch(batchData: ERC20Batch[]): Promise<ethers.TransactionResponse | Error> {
+    async executeERC20Batch(batchData: ERC20Batch[]): Promise<ethers.TransactionResponse> {
+        if (!this.batchContract)
+            throw new Error("SDK not initialized properly. Call init() method");
         try {
-            if (!this.batchContract)
-                throw new Error("SDK not initialized properly. Call init() method");
             let recipients = [];
             let amounts = [];
             let tokens = [];
@@ -127,7 +122,6 @@ export class BatchTransaction {
             }
 
             const allowance = await this.erc20Approval(TOKEN_CONTRACT_ADDRESS, BATCH_CONTRACT_ADDRESS, totalAmount);
-            console.log("Allowance ", allowance);
 
             const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
                 tokens,
@@ -136,18 +130,12 @@ export class BatchTransaction {
             );
 
             const estimatedGas = await this.estimateBatchGas(txnData);
-            const txn = await this.signer?.sendTransaction({
-                to: txnData.to,
-                data: txnData.data,
-                value: txnData.value,
-                gasLimit: estimatedGas
-            })
-            console.log("ERC20 transaction ", txn);
-            if (txn?.hash)
+            const txn = await this.sendTransaction(txnData, estimatedGas)
+            if (txn)
                 return txn;
             throw new Error("Transaction failed");
-        } catch (error) {
-            throw new Error(JSON.stringify(error));
+        } catch (error: any) {
+            throw new Error(error);
         }
     }
 
@@ -160,7 +148,30 @@ export class BatchTransaction {
     }
 
     private async estimateBatchGas(transactionData: ethers.ContractTransaction) {
-        const estimatedGas = await this.signer?.estimateGas(transactionData);
-        return estimatedGas;
+        try {
+            const estimatedGas = await this.signer?.estimateGas(transactionData);
+            if (estimatedGas)
+                return estimatedGas;
+            throw new Error("Gas Estimation failed");
+        } catch (error) {
+            return BigInt(300000);
+        }
+        
+    }
+
+    private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint): Promise<ethers.TransactionResponse> {
+        try {
+            const txn = await this.signer?.sendTransaction({
+                to: transactionData.to,
+                data: transactionData.data,
+                value: transactionData.value,
+                gasLimit: gasLimit
+            });
+            if (txn?.hash)
+                return txn;
+            throw new Error("Transaction Failed")
+        } catch(error: any) {
+            throw new Error(error);
+        }  
     }
 }
