@@ -16,13 +16,9 @@ export class BatchTransaction {
     signer: ethers.Signer | null;
     batchContract: ethers.Contract | null;
 
-    // can we make the selection of batching contract generalize
-    // batchContractAddress: string | null;
-
-    constructor(batchContractAddress?: string) {
+    constructor() {
         this.provider = null;
         this.signer = null;
-        // this.batchContractAddress = null
         this.batchContract = null;
     }
 
@@ -91,17 +87,13 @@ export class BatchTransaction {
             const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
             const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
             const estimatedGas = await this.estimateBatchGas(txnData);
-            const txn = await this.signer.sendTransaction({
-                to: txnData.to,
-                data: txnData.data,
-                value: txnData.value,
-                gasLimit: estimatedGas
-            });
+
+            const txn = await this.sendTransaction(txnData, estimatedGas);
             if (txn.hash)
                 return txn
             throw new Error("Transaction failed ");
-        } catch (error) {
-            throw new Error(JSON.stringify(error));
+        } catch (error: any) {
+            throw new Error(error);
         }
 
     }
