@@ -13,6 +13,7 @@
     "categorizeByGroup": true,
     "cacheBust": true,
     "hideGenerator": true,
+    "commentStyle": "jsdoc",
     "plugin": [
         "typedoc-plugin-markdown",
         "typedoc-plugin-merge-modules"
@@ -27,6 +28,9 @@
         "Interface"
     ],
     "typeDeclarationFormat": "table",
+    "parametersFormat": "table",
+    "interfacePropertiesFormat": "table",
+    "classPropertiesFormat": "table",
     "excludeScopesInPaths": true,
     "entryFileName": "index.md",
     "modulesFileName": "index",

@@ -16,47 +16,16 @@
 
 #### Defined in
 
-[execute.ts:20](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L20)
+[execute.ts:20](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L20)
 
 ## Properties
 
-### batchContract
-
-> **batchContract**: `null` \| `Contract`
-
-#### Defined in
-
-[execute.ts:18](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L18)
-
-***
-
-### batchProcessingContract
-
-> **batchProcessingContract**: `null` \| `Contract`
-
-#### Defined in
-
-[execute.ts:17](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L17)
-
-***
-
-### provider
-
-> **provider**: `null` \| `Provider`
-
-#### Defined in
-
-[execute.ts:15](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L15)
-
-***
-
-### signer
-
-> **signer**: `null` \| `Signer`
-
-#### Defined in
-
-[execute.ts:16](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L16)
+| Property | Type | Defined in |
+| ------ | ------ | ------ |
+| `batchContract` | `null` \| `Contract` | [execute.ts:18](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L18) |
+| `batchProcessingContract` | `null` \| `Contract` | [execute.ts:17](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L17) |
+| `provider` | `null` \| `Provider` | [execute.ts:15](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L15) |
+| `signer` | `null` \| `Signer` | [execute.ts:16](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L16) |
 
 ## Methods
 
@@ -66,9 +35,10 @@
 
 #### Parameters
 
-• **erc20Batch**: [`ERC20Batch`](../interfaces/ERC20Batch.md)
-
-• **allowanceAmount**: [`TokenAllowance`](../interfaces/TokenAllowance.md)
+| Parameter | Type |
+| ------ | ------ |
+| `erc20Batch` | [`ERC20Batch`](../interfaces/ERC20Batch.md) |
+| `allowanceAmount` | [`TokenAllowance`](../interfaces/TokenAllowance.md) |
 
 #### Returns
 
@@ -76,7 +46,7 @@
 
 #### Defined in
 
-[execute.ts:216](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L216)
+[execute.ts:216](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L216)
 
 ***
 
@@ -86,9 +56,10 @@
 
 #### Parameters
 
-• **ethBatch**: [`ETHBatch`](../interfaces/ETHBatch.md)
-
-• **totalEthAmount**: `BigInt`
+| Parameter | Type |
+| ------ | ------ |
+| `ethBatch` | [`ETHBatch`](../interfaces/ETHBatch.md) |
+| `totalEthAmount` | `BigInt` |
 
 #### Returns
 
@@ -96,7 +67,7 @@
 
 #### Defined in
 
-[execute.ts:202](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L202)
+[execute.ts:202](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L202)
 
 ***
 
@@ -108,7 +79,9 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Parameters
 
-• **initialize?**: [`Initializer`](../interfaces/Initializer.md)
+| Parameter | Type |
+| ------ | ------ |
+| `initialize`? | [`Initializer`](../interfaces/Initializer.md) |
 
 #### Returns
 
@@ -116,7 +89,7 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Defined in
 
-[execute.ts:51](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L51)
+[execute.ts:51](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L51)
 
 ***
 
@@ -126,9 +99,10 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Parameters
 
-• **batchData**: [`BatchData`](../interfaces/BatchData.md)[]
-
-• **gasPrice**: `null` \| `bigint` = `null`
+| Parameter | Type | Default value |
+| ------ | ------ | ------ |
+| `batchData` | [`BatchData`](../interfaces/BatchData.md)[] | `undefined` |
+| `gasPrice` | `null` \| `bigint` | `null` |
 
 #### Returns
 
@@ -136,4 +110,4 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Defined in
 
-[execute.ts:99](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L99)
+[execute.ts:99](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/execute.ts#L99)

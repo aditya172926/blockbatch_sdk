@@ -6,20 +6,7 @@
 
 ## Properties
 
-### erc20
-
-> **erc20**: `null` \| `ContractTransaction`
-
-#### Defined in
-
-[types.ts:35](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/types.ts#L35)
-
-***
-
-### eth
-
-> **eth**: `null` \| `ContractTransaction`
-
-#### Defined in
-
-[types.ts:36](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/types.ts#L36)
+| Property | Type | Defined in |
+| ------ | ------ | ------ |
+| `erc20` | `null` \| `ContractTransaction` | [types.ts:35](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/types.ts#L35) |
+| `eth` | `null` \| `ContractTransaction` | [types.ts:36](https://github.com/aditya172926/token_batch_sdk/blob/31ad48448e12602e3d1d599287f9584562d727a8/src/types.ts#L36) |
