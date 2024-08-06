@@ -25,6 +25,37 @@ __export(execute_exports, {
 module.exports = __toCommonJS(execute_exports);
 var import_ethers = require("ethers");
 
+// src/abi/BatchContract.abi.ts
+var BATCH_CONTRACT_ABI = [
+  {
+    "stateMutability": "nonpayable",
+    "type": "fallback"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "data",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "to",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "value",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "sendBatchTransactions",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+];
+
 // src/abi/BatchTransferContract.abi.ts
 var BATCH_PROCESS_ABI = [
   {
@@ -551,37 +582,7 @@ var erc20Abi = [
 // src/constants.ts
 var BATCH_PROCESS_CONTRACT_ADDRESS = "0x7FD154df41ec41336A86Ee53a3F7Fe886E80Efc7";
 var BATCH_CONTRACT_ADDRESS = "0xb8cBB6a9965A851Dcb88Bb1734231c531a0bcdF1";
-
-// src/abi/BatchContract.abi.ts
-var BATCH_CONTRACT_ABI = [
-  {
-    "stateMutability": "nonpayable",
-    "type": "fallback"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes[]",
-        "name": "data",
-        "type": "bytes[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "to",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "value",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "sendBatchTransactions",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  }
-];
+var DEFAULT_GAS_LIMIT = 3e5;
 
 // src/execute.ts
 var BatchTransaction = class {
@@ -589,14 +590,6 @@ var BatchTransaction = class {
   signer;
   batchProcessingContract;
   batchContract;
-  /**
-   * Stuff this class can do so far
-   * Send ETH in batch transactions
-   * Send ERC20 in batch transactions
-   * Send multi erc20 tokens in batch transactions
-   * Estimate gas for batch transactions - gas fees for slow, medium and fast transactions remaining
-   * 
-   */
   constructor() {
     this.provider = null;
     this.signer = null;
@@ -608,7 +601,6 @@ var BatchTransaction = class {
     if (setup) {
       this.batchProcessingContract = new import_ethers.ethers.Contract(BATCH_PROCESS_CONTRACT_ADDRESS, BATCH_PROCESS_ABI, this.signer);
       this.batchContract = new import_ethers.ethers.Contract(BATCH_CONTRACT_ADDRESS, BATCH_CONTRACT_ABI, this.signer);
-      console.log(this.batchProcessingContract);
       return true;
     }
     return false;
@@ -650,7 +642,7 @@ var BatchTransaction = class {
       throw new Error(error);
     }
   }
-  async processBatchTransactions(batchData) {
+  async processBatchTransactions(batchData, gasPrice = null) {
     try {
       let ethBatch = {
         recipients: [],
@@ -663,12 +655,20 @@ var BatchTransaction = class {
       };
       let totalEthAmount = BigInt(0);
       let allowanceAmount = {};
+      let invalidTxns = [];
       for (let batch of batchData) {
-        if (!import_ethers.ethers.isAddress(batch.recipient))
-          throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+        if (!import_ethers.ethers.isAddress(batch.recipient)) {
+          invalidTxns.push({ message: `Invalid recipient address provided ${batch.recipient}`, batchData: batch });
+          continue;
+        }
         if (batch.tokenAddress) {
-          if (!import_ethers.ethers.isAddress(batch.tokenAddress))
-            throw new Error(`Invalid token address provided ${batch.tokenAddress}`);
+          if (!import_ethers.ethers.isAddress(batch.tokenAddress)) {
+            invalidTxns.push({
+              message: `Invalid token address provided ${batch.tokenAddress}`,
+              batchData: batch
+            });
+            continue;
+          }
           erc20Batch.recipients.push(batch.recipient);
           erc20Batch.amounts.push(BigInt(batch.amount));
           erc20Batch.tokens.push(batch.tokenAddress);
@@ -683,6 +683,8 @@ var BatchTransaction = class {
           totalEthAmount += import_ethers.ethers.parseEther(batch.amount);
         }
       }
+      if (ethBatch.recipients.length == 0 && erc20Batch.recipients.length == 0)
+        return invalidTxns;
       let response = {
         erc20: null,
         eth: null
@@ -713,7 +715,6 @@ var BatchTransaction = class {
         batchTxnParams.to.push(response.eth.to);
         totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
       }
-      console.log("Response transaction data ", batchTxnParams);
       const txnData = await this.batchContract?.sendBatchTransactions.populateTransaction(
         batchTxnParams.data,
         batchTxnParams.to,
@@ -722,11 +723,11 @@ var BatchTransaction = class {
       );
       if (txnData) {
         const gasLimit = await this.estimateBatchGas(txnData);
-        console.log("Gas limit ", gasLimit);
-        const txn = await this.sendTransaction(txnData, gasLimit);
-        console.log("Transaction ==> ", txn);
+        const txn = await this.sendTransaction(txnData, gasLimit, gasPrice);
+        await txn.wait();
+        return { txn, invalidTxns };
       }
-      return response;
+      throw new Error("Transaction failed. Failed to generate batch Transaction Data");
     } catch (error) {
       throw new Error(error);
     }
@@ -739,9 +740,7 @@ var BatchTransaction = class {
         throw new Error("Either provider or signer not set");
       }
       const txnData = await this.batchProcessingContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
-      const estimatedGas = await this.estimateBatchGas(txnData);
       return txnData;
-      throw new Error("Transaction failed ");
     } catch (error) {
       throw new Error(error);
     }
@@ -760,9 +759,7 @@ var BatchTransaction = class {
         erc20Batch.amounts,
         spender
       );
-      const estimatedGas = await this.estimateBatchGas(txnData);
       return txnData;
-      throw new Error("Transaction failed");
     } catch (error) {
       throw new Error(error);
     }
@@ -770,31 +767,34 @@ var BatchTransaction = class {
   async erc20Approval(token, spender, amount) {
     try {
       const erc20Contract = new import_ethers.ethers.Contract(token, erc20Abi, this.signer);
-      const approval = await erc20Contract.approve(spender, amount);
+      const _approval = await erc20Contract.approve(spender, amount);
       const address = await this.signer?.getAddress();
       const allowance = await erc20Contract.allowance(address, spender);
       return allowance;
     } catch (error) {
-      console.log(error);
+      throw new Error(error);
     }
   }
   async estimateBatchGas(transactionData) {
     try {
-      const estimatedGas = await this.signer?.estimateGas(transactionData);
-      if (estimatedGas)
-        return estimatedGas;
+      const gasLimit = await this.signer?.estimateGas(transactionData);
+      if (gasLimit) {
+        return gasLimit;
+      }
       throw new Error("Gas Estimation failed");
     } catch (error) {
-      return BigInt(3e5);
+      return BigInt(DEFAULT_GAS_LIMIT);
     }
   }
-  async sendTransaction(transactionData, gasLimit) {
+  async sendTransaction(transactionData, gasLimit, gasPrice) {
     try {
+      const gasFees = gasPrice ? gasLimit * gasPrice : null;
       const txn = await this.signer?.sendTransaction({
         to: transactionData.to,
         data: transactionData.data,
         value: transactionData.value,
-        gasLimit
+        gasLimit,
+        gasPrice: gasFees
       });
       if (txn?.hash)
         return txn;
