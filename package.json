@@ -8,7 +8,7 @@
     "build": "tsup ./src",
     "docs": "typedoc",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "npm run docs && vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "keywords": [
