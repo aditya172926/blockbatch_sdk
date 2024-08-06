@@ -1,7 +1,7 @@
 import { ethers, toBigInt } from "ethers";
 import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
-import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS } from "./constants";
+import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS, DEFAULT_GAS_LIMIT } from "./constants";
 import { BatchData, BatchTransactionParams, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
 import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
 
@@ -72,7 +72,7 @@ export class BatchTransaction {
         }
     }
 
-    async processBatchTransactions(batchData: BatchData[]): Promise<ProcessedBatch> {
+    async processBatchTransactions(batchData: BatchData[]): Promise<ethers.TransactionResponse> {
         try {
             let ethBatch: ETHBatch = {
                 recipients: [],
@@ -135,14 +135,13 @@ export class BatchTransaction {
                 batchTxnParams.to.push(response.erc20.to);
                 totalEthValue += response.erc20.value ? response.erc20.value : BigInt(0);
             }
-
             if (response.eth) {
                 batchTxnParams.data.push(response.eth.data);
                 batchTxnParams.values.push(response.eth.value ? response.eth.value : BigInt(0))
                 batchTxnParams.to.push(response.eth.to);
                 totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
             }
-
+            
             const txnData = await this.batchContract?.sendBatchTransactions.populateTransaction(
                 batchTxnParams.data,
                 batchTxnParams.to,
@@ -151,14 +150,14 @@ export class BatchTransaction {
             );
             if (txnData) {
                 const gasLimit = await this.estimateBatchGas(txnData);
-                const txn = await this.sendTransaction(txnData, gasLimit)
+                const txn = await this.sendTransaction(txnData, gasLimit);
+                await txn.wait();
+                return txn;
             }
-
-            return response;
+            throw new Error("Transaction failed. Failed to generate batch Transaction Data");
         } catch (error: any) {
             throw new Error(error);
         }
-
     }
 
     async executeEthBatch(ethBatch: ETHBatch, totalEthAmount: BigInt): Promise<ethers.ContractTransaction> {
@@ -168,18 +167,11 @@ export class BatchTransaction {
             if (!this.signer || !this.provider) {
                 throw new Error("Either provider or signer not set");
             }
-
             const txnData = await this.batchProcessingContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
-            const estimatedGas = await this.estimateBatchGas(txnData);
             return txnData;
-            // const txn = await this.sendTransaction(txnData, estimatedGas);
-            // if (txn.hash)
-            //     return txn;
-            throw new Error("Transaction failed ");
         } catch (error: any) {
             throw new Error(error);
         }
-
     }
 
     async executeERC20Batch(erc20Batch: ERC20Batch, allowanceAmount: TokenAllowance): Promise<ethers.ContractTransaction> {
@@ -199,12 +191,7 @@ export class BatchTransaction {
                 spender
             );
 
-            const estimatedGas = await this.estimateBatchGas(txnData);
             return txnData;
-            // const txn = await this.sendTransaction(txnData, estimatedGas)
-            // if (txn)
-            //     return txn;
-            throw new Error("Transaction failed");
         } catch (error: any) {
             throw new Error(error);
         }
@@ -213,7 +200,7 @@ export class BatchTransaction {
     private async erc20Approval(token: string, spender: string, amount: BigInt) {
         try {
             const erc20Contract = new ethers.Contract(token, erc20Abi, this.signer);
-            const approval = await erc20Contract.approve(spender, amount);
+            const _approval = await erc20Contract.approve(spender, amount);
             const address = await this.signer?.getAddress();
             const allowance = await erc20Contract.allowance(address, spender);
             return allowance;
@@ -229,9 +216,8 @@ export class BatchTransaction {
                 return estimatedGas;
             throw new Error("Gas Estimation failed");
         } catch (error) {
-            return BigInt(300000);
+            return BigInt(DEFAULT_GAS_LIMIT);
         }
-
     }
 
     private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint): Promise<ethers.TransactionResponse> {
