@@ -1,9 +1,9 @@
 import { ethers } from "ethers"
 
-export interface Transaction {
-    address: string,
-    value: string,
-    data: string
+export interface BatchTransactionParams {
+    to: string[],
+    values: BigInt[],
+    data: string[]
 }
 
 export interface Initializer {
@@ -32,6 +32,6 @@ export interface TokenAllowance {
 }
 
 export interface ProcessedBatch {
-    erc20: ethers.TransactionResponse | null,
-    eth: ethers.TransactionResponse | null
+    erc20: ethers.ContractTransaction | null,
+    eth: ethers.ContractTransaction | null
 }

@@ -19,32 +19,32 @@ describe("init", () => {
 
     test("sending provider-less signer, should throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ signer: wallet })).rejects.toThrow("Provider not found in Signer or Params");
+        await expect(batch.init({ signer: wallet })).rejects.toThrow("Provider not found in Signer or Params");
     });
 
     test("sending only private key, throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ private_key: PRIVATE_KEY })).rejects.toThrow("Provider not found. Send Provider object with Private Key");
+        await expect(batch.init({ private_key: PRIVATE_KEY })).rejects.toThrow("Provider not found. Send Provider object with Private Key");
     });
 
     test("sending only provider, should throw error", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ provider })).rejects.toThrow("Cannot send only provider. Send either a Private key or Signer as well");
+        await expect(batch.init({ provider })).rejects.toThrow("Cannot send only provider. Send either a Private key or Signer as well");
     });
 
     test("sending no initializers, should throw an error in Node env", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init()).rejects.toThrow("ReferenceError: window is not defined");
+        await expect(batch.init()).rejects.toThrow("ReferenceError: window is not defined");
     });
 
     test("sending private key & provider, return true", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ private_key: PRIVATE_KEY, provider })).resolves.toBe(true);
+        await expect(batch.init({ private_key: PRIVATE_KEY, provider })).resolves.toBe(true);
     });
 
     test("sending signer & provider, return true", async () => {
         const batch = new BatchTransaction();
-        expect(batch.init({ signer: wallet, provider })).resolves.toBe(true);
+        await expect(batch.init({ signer: wallet, provider })).resolves.toBe(true);
     });
 });
 
@@ -62,12 +62,12 @@ describe("executeEthBatch", () => {
 
     test('should return TransactionResponse on successful ETH transfer', async () => {
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.processBatchTransactions(ethBatch)).resolves.toHaveProperty('eth');
+        await expect(batchsdk.processBatchTransactions(ethBatch)).resolves.toHaveProperty('eth');
     });
 
     test("throw error without initializing SDK", async() => {
         const batchsdk = new BatchTransaction();
-        expect(batchsdk.processBatchTransactions(ethBatch)).rejects.toThrow("SDK not initialized properly. Call init() method");
+        await expect(batchsdk.processBatchTransactions(ethBatch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
     test("throw error if invalid recipient address provided", async() => {
@@ -82,7 +82,7 @@ describe("executeEthBatch", () => {
             }
         ]; 
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.processBatchTransactions(mockETHBatch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
+        await expect(batchsdk.processBatchTransactions(mockETHBatch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
     });
 
 
@@ -104,12 +104,12 @@ describe("executeERC20Batch", () => {
 
     test('should return TransactionResponse on successful ERC20 token transfer', async() => {
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.processBatchTransactions(erc20Batch)).resolves.toHaveProperty('erc20');
+        await expect(batchsdk.processBatchTransactions(erc20Batch)).resolves.toHaveProperty('erc20');
     });
 
     test("throw error without initializing SDK", async() => {
         const batchsdk = new BatchTransaction();
-        expect(batchsdk.processBatchTransactions(erc20Batch)).rejects.toThrow("SDK not initialized properly. Call init() method");
+        await expect(batchsdk.processBatchTransactions(erc20Batch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
     test("throw error if invalid recipient address provided", async() => {
@@ -126,6 +126,6 @@ describe("executeERC20Batch", () => {
             }
         ];
         const batchsdk = await initBatchSDK();
-        expect(batchsdk.processBatchTransactions(mockErc20Batch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
+        await expect(batchsdk.processBatchTransactions(mockErc20Batch)).rejects.toThrow("Invalid recipient address provided 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be");
     });
 });
