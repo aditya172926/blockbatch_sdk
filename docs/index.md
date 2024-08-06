@@ -5,13 +5,11 @@ layout: home
 hero:
   name: "Token Batch SDK"
   text: "SDK for sending ETH and ERC20 tokens in a single Batch transaction"
-  tagline: My great project tagline
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Docs
+      link: /sdk/
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: NPM
+      link: https://www.npmjs.com/package/token_batch_sdk
 ---
-

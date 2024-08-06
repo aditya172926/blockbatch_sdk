@@ -1,8 +1,10 @@
 # Interface: InvalidTransactions
 
+Contains all of the invalid transactions that cannot be included in the Processedbatch
+
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| `batchData` | [`BatchData`](BatchData.md) | [types.ts:41](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L41) |
-| `message` | `string` | [types.ts:40](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L40) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| `batchData` | [`BatchData`](BatchData.md) | Rejected transaction data | [types.ts:69](https://github.com/aditya172926/token_batch_sdk/blob/61a8d4c29abe90e525e3ce490e931163b1571636/src/types.ts#L69) |
+| `message` | `string` | Message showing which transaction batch was rejected | [types.ts:66](https://github.com/aditya172926/token_batch_sdk/blob/61a8d4c29abe90e525e3ce490e931163b1571636/src/types.ts#L66) |

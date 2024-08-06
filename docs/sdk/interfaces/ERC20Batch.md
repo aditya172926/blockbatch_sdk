@@ -1,13 +1,15 @@
 # Interface: ERC20Batch
 
+Batch of all transactions for transfering ETH to recipients
+
 ## Extends
 
 - [`ETHBatch`](ETHBatch.md)
 
 ## Properties
 
-| Property | Type | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ |
-| `amounts` | `BigInt`[] | [`ETHBatch`](ETHBatch.md).[`amounts`](ETHBatch.md#amounts) | [types.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L23) |
-| `recipients` | `string`[] | [`ETHBatch`](ETHBatch.md).[`recipients`](ETHBatch.md#recipients) | [types.ts:22](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L22) |
-| `tokens` | `string`[] | - | [types.ts:27](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L27) |
+| Property | Type | Description | Inherited from | Defined in |
+| ------ | ------ | ------ | ------ | ------ |
+| `amounts` | `BigInt`[] | Corresponding ETH/ERC20 amount to send to each recipient | [`ETHBatch`](ETHBatch.md).[`amounts`](ETHBatch.md#amounts) | [types.ts:40](https://github.com/aditya172926/token_batch_sdk/blob/61a8d4c29abe90e525e3ce490e931163b1571636/src/types.ts#L40) |
+| `recipients` | `string`[] | Array of addresses for recipients of ETH | [`ETHBatch`](ETHBatch.md).[`recipients`](ETHBatch.md#recipients) | [types.ts:37](https://github.com/aditya172926/token_batch_sdk/blob/61a8d4c29abe90e525e3ce490e931163b1571636/src/types.ts#L37) |
+| `tokens` | `string`[] | Array of ERC20 token addresses for transferring to each recipient | - | [types.ts:46](https://github.com/aditya172926/token_batch_sdk/blob/61a8d4c29abe90e525e3ce490e931163b1571636/src/types.ts#L46) |
