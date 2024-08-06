@@ -1,9 +1,9 @@
-// module to execute batch transactions
 import { ethers, toBigInt } from "ethers";
-import { abi } from "./abi/BatchTransferContract.abi";
+import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
-import { BATCH_CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS } from "./constants";
-import { ERC20Batch, EthBatch, Initializer, TokenAllowance } from "./types";
+import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS } from "./constants";
+import { BatchData, BatchTransactionParams, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
+import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
 
 declare global {
     interface Window {
@@ -14,19 +14,22 @@ declare global {
 export class BatchTransaction {
     provider: ethers.Provider | null;
     signer: ethers.Signer | null;
+    batchProcessingContract: ethers.Contract | null;
     batchContract: ethers.Contract | null;
 
     constructor() {
         this.provider = null;
         this.signer = null;
+        this.batchProcessingContract = null;
         this.batchContract = null;
     }
 
-    async init(initialize?: Initializer) {
+    async init(initialize?: Initializer): Promise<boolean> {
         const setup = await this.setup(initialize);
         if (setup) {
-            this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-            return true
+            this.batchProcessingContract = new ethers.Contract(BATCH_PROCESS_CONTRACT_ADDRESS, BATCH_PROCESS_ABI, this.signer);
+            this.batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, BATCH_CONTRACT_ABI, this.signer);
+            return true;
         }
         return false;
     }
@@ -69,32 +72,109 @@ export class BatchTransaction {
         }
     }
 
-    async executeEthBatch(batchData: EthBatch[]): Promise<ethers.TransactionResponse | Error> {
-        if (!this.batchContract)
+    async processBatchTransactions(batchData: BatchData[]): Promise<ProcessedBatch> {
+        try {
+            let ethBatch: ETHBatch = {
+                recipients: [],
+                amounts: []
+            };
+            let erc20Batch: ERC20Batch = {
+                recipients: [],
+                amounts: [],
+                tokens: []
+            };
+
+            let totalEthAmount = BigInt(0);
+            let allowanceAmount: TokenAllowance = {};
+
+            for (let batch of batchData) {
+                if (!ethers.isAddress(batch.recipient))
+                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+                if (batch.tokenAddress) { // batching erc20
+                    if (!ethers.isAddress(batch.tokenAddress))
+                        throw new Error(`Invalid token address provided ${batch.tokenAddress}`);
+                    erc20Batch.recipients.push(batch.recipient);
+                    erc20Batch.amounts.push(BigInt(batch.amount));
+                    erc20Batch.tokens.push(batch.tokenAddress);
+                    if (allowanceAmount[batch.tokenAddress!]) {
+                        allowanceAmount[batch.tokenAddress!] += BigInt(batch.amount);
+                    } else {
+                        allowanceAmount[batch.tokenAddress!] = BigInt(batch.amount);
+                    }
+                } else { // batching eth
+                    ethBatch.recipients.push(batch.recipient);
+                    ethBatch.amounts.push(ethers.parseEther(batch.amount));
+                    totalEthAmount += ethers.parseEther(batch.amount);
+                }
+            }
+
+            let response: ProcessedBatch = {
+                erc20: null,
+                eth: null
+            };
+
+            if (ethBatch.recipients.length > 0) {
+                const ethBatchTransactionData = await this.executeEthBatch(ethBatch, totalEthAmount);
+                response["eth"] = ethBatchTransactionData;
+            }
+            if (erc20Batch.recipients.length > 0) {
+                const erc20BatchTransactionData = await this.executeERC20Batch(erc20Batch, allowanceAmount);
+                response["erc20"] = erc20BatchTransactionData;
+            }
+
+            let totalEthValue = BigInt(0);
+            let batchTxnParams: BatchTransactionParams = {
+                data: [],
+                values: [],
+                to: []
+            }
+
+            if (response.erc20) {
+                batchTxnParams.data.push(response.erc20.data);
+                batchTxnParams.values.push(response.erc20.value ? response.erc20.value : BigInt(0))
+                batchTxnParams.to.push(response.erc20.to);
+                totalEthValue += response.erc20.value ? response.erc20.value : BigInt(0);
+            }
+
+            if (response.eth) {
+                batchTxnParams.data.push(response.eth.data);
+                batchTxnParams.values.push(response.eth.value ? response.eth.value : BigInt(0))
+                batchTxnParams.to.push(response.eth.to);
+                totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
+            }
+
+            const txnData = await this.batchContract?.sendBatchTransactions.populateTransaction(
+                batchTxnParams.data,
+                batchTxnParams.to,
+                batchTxnParams.values,
+                { value: totalEthValue }
+            );
+            if (txnData) {
+                const gasLimit = await this.estimateBatchGas(txnData);
+                const txn = await this.sendTransaction(txnData, gasLimit)
+            }
+
+            return response;
+        } catch (error: any) {
+            throw new Error(error);
+        }
+
+    }
+
+    async executeEthBatch(ethBatch: ETHBatch, totalEthAmount: BigInt): Promise<ethers.ContractTransaction> {
+        if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
             if (!this.signer || !this.provider) {
                 throw new Error("Either provider or signer not set");
             }
 
-            let recipients = [];
-            let amounts = [];
-            let totalAmount = BigInt(0);
-            for (let batch of batchData) {
-                if (!ethers.isAddress(batch.recipient))
-                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
-                recipients.push(batch.recipient);
-                amounts.push(ethers.parseEther(batch.amount));
-                totalAmount += ethers.parseEther(batch.amount);
-            }
-
-            const batchContract = new ethers.Contract(BATCH_CONTRACT_ADDRESS, abi, this.signer);
-            const txnData = await batchContract.batchTransfer.populateTransaction(recipients, amounts, { value: totalAmount });
+            const txnData = await this.batchProcessingContract.batchTransfer.populateTransaction(ethBatch.recipients, ethBatch.amounts, { value: totalEthAmount });
             const estimatedGas = await this.estimateBatchGas(txnData);
-
-            const txn = await this.sendTransaction(txnData, estimatedGas);
-            if (txn.hash)
-                return txn
+            return txnData;
+            // const txn = await this.sendTransaction(txnData, estimatedGas);
+            // if (txn.hash)
+            //     return txn;
             throw new Error("Transaction failed ");
         } catch (error: any) {
             throw new Error(error);
@@ -102,41 +182,28 @@ export class BatchTransaction {
 
     }
 
-    async executeERC20Batch(batchData: ERC20Batch[]): Promise<ethers.TransactionResponse> {
-        if (!this.batchContract)
+    async executeERC20Batch(erc20Batch: ERC20Batch, allowanceAmount: TokenAllowance): Promise<ethers.ContractTransaction> {
+        if (!this.batchProcessingContract)
             throw new Error("SDK not initialized properly. Call init() method");
         try {
-            let recipients = [];
-            let amounts = [];
-            let tokens = [];
-            let allowanceAmount: TokenAllowance = {};
-            for (let batch of batchData) {
-                if (!ethers.isAddress(batch.recipient))
-                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
-                recipients.push(batch.recipient);
-                amounts.push(BigInt(batch.amount));
-                tokens.push(batch.tokenAddress);
-                if (allowanceAmount[batch.tokenAddress]) {
-                    allowanceAmount[batch.tokenAddress] += BigInt(batch.amount);
-                } else {
-                    allowanceAmount[batch.tokenAddress] = BigInt(batch.amount);
-                }
-            }
-
             for (let key in allowanceAmount) {
-                const _allowance = await this.erc20Approval(key, BATCH_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
+                const _allowance = await this.erc20Approval(key, BATCH_PROCESS_CONTRACT_ADDRESS, toBigInt(allowanceAmount[key]));
             }
 
-            const txnData = await this.batchContract.batchTransferMultiTokens.populateTransaction(
-                tokens,
-                recipients,
-                amounts,
+            const spender = await this.signer?.getAddress();
+
+            const txnData = await this.batchProcessingContract.batchTransferMultiTokens.populateTransaction(
+                erc20Batch.tokens,
+                erc20Batch.recipients,
+                erc20Batch.amounts,
+                spender
             );
 
             const estimatedGas = await this.estimateBatchGas(txnData);
-            const txn = await this.sendTransaction(txnData, estimatedGas)
-            if (txn)
-                return txn;
+            return txnData;
+            // const txn = await this.sendTransaction(txnData, estimatedGas)
+            // if (txn)
+            //     return txn;
             throw new Error("Transaction failed");
         } catch (error: any) {
             throw new Error(error);
@@ -150,8 +217,8 @@ export class BatchTransaction {
             const address = await this.signer?.getAddress();
             const allowance = await erc20Contract.allowance(address, spender);
             return allowance;
-        } catch (error) {
-            console.log(error);
+        } catch (error: any) {
+            throw new Error(error);
         }
     }
 
