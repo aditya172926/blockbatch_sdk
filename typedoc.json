@@ -1,0 +1,47 @@
+{
+    // ************** //
+    // TypeDoc Config
+    // ************** //
+    "$schema": "https://typedoc.org/schema.json",
+    "name": "Token Batch SDK",
+    "includeVersion": true,
+    "entryPointStrategy": "resolve",
+    "entryPoints": [
+        "./src/index.ts"
+    ],
+    "out": "docs/sdk",
+    "githubPages": false,
+    "categorizeByGroup": true,
+    "cacheBust": true,
+    "hideGenerator": true,
+    "commentStyle": "jsdoc",
+    "plugin": [
+        "typedoc-plugin-markdown",
+        "typedoc-vitepress-theme",
+        "typedoc-plugin-merge-modules",
+    ],
+    // ********************** //
+    // Markdown Config
+    // ********************** //
+    "hideBreadcrumbs": true,
+    "membersWithOwnFile": [
+        "Class",
+        "Enum",
+        "Interface"
+    ],
+    "typeDeclarationFormat": "htmlTable",
+    "parametersFormat": "htmlTable",
+    "interfacePropertiesFormat": "htmlTable",
+    "classPropertiesFormat": "htmlTable",
+    "excludeScopesInPaths": true,
+    "entryFileName": "index.md",
+    "modulesFileName": "index",
+    // ********************** //
+    // Vitepress Config
+    // ********************** //
+    "docsRoot": "./docs",
+    // ******************** //
+    // Merge Modules Config
+    // ******************** //
+    "mergeModulesMergeMode": "module"
+}
