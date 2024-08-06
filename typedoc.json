@@ -29,9 +29,9 @@
         "Enum",
         "Interface"
     ],
-    "typeDeclarationFormat": "table",
-    "parametersFormat": "table",
-    "interfacePropertiesFormat": "table",
+    "typeDeclarationFormat": "htmlTable",
+    "parametersFormat": "htmlTable",
+    "interfacePropertiesFormat": "htmlTable",
     "classPropertiesFormat": "htmlTable",
     "excludeScopesInPaths": true,
     "entryFileName": "index.md",
