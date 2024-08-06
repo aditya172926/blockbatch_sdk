@@ -3,7 +3,7 @@
 Token Batch SDK is used for sending multiple ETH and ERC20 tokens in a single Batch Transaction.
 
 ## Docs
-Read further about SDK classes and methods (here)[https://token-batch-sdk.vercel.app/]
+Read further about SDK classes and methods [here](https://token-batch-sdk.vercel.app/)
 
 ## Installation
 ```
