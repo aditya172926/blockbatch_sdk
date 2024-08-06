@@ -1,17 +1,13 @@
-[**Token Batch SDK v1.0.3**](../index.md) • **Docs**
-
-***
-
 # Class: BatchTransaction
 
 ## Properties
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| `batchContract` | `null` \| `Contract` | Parent Batch Smart Contract Used for aggregating all different transaction batches and executing in single transaction call. | [execute.ts:39](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L39) |
-| `batchProcessingContract` | `null` \| `Contract` | Batch smart contract with methods for executing Batched ETH and ERC20 transfer transactions | [execute.ts:33](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L33) |
-| `provider` | `null` \| `Provider` | Provider used to interact with the network This is fetched directly if ethereum object is present in Window (being used in browser) | [execute.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L23) |
-| `signer` | `null` \| `Signer` | Signer used as runner for executing smart contracts transactions | [execute.ts:28](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L28) |
+| `batchContract` | `null` \| `Contract` | Parent Batch Smart Contract Used for aggregating all different transaction batches and executing in single transaction call. | [execute.ts:39](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L39) |
+| `batchProcessingContract` | `null` \| `Contract` | Batch smart contract with methods for executing Batched ETH and ERC20 transfer transactions | [execute.ts:33](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L33) |
+| `provider` | `null` \| `Provider` | Provider used to interact with the network This is fetched directly if ethereum object is present in Window (being used in browser) | [execute.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L23) |
+| `signer` | `null` \| `Signer` | Signer used as runner for executing smart contracts transactions | [execute.ts:28](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L28) |
 
 ## Methods
 
@@ -32,7 +28,7 @@
 
 #### Defined in
 
-[execute.ts:219](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L219)
+[execute.ts:219](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L219)
 
 ***
 
@@ -53,7 +49,7 @@
 
 #### Defined in
 
-[execute.ts:205](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L205)
+[execute.ts:205](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L205)
 
 ***
 
@@ -75,7 +71,7 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Defined in
 
-[execute.ts:54](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L54)
+[execute.ts:54](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L54)
 
 ***
 
@@ -96,4 +92,4 @@ Initializes BatchTransaction class by performing setup operations for contracts 
 
 #### Defined in
 
-[execute.ts:102](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/execute.ts#L102)
+[execute.ts:102](https://github.com/aditya172926/token_batch_sdk/blob/e2d7e3905b1c77948c53f97ef3f9dfbbaf62e7d6/src/execute.ts#L102)

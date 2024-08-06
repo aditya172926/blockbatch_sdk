@@ -9,7 +9,7 @@
     "entryPoints": [
         "./src/index.ts"
     ],
-    "out": "docs",
+    "out": "docs/sdk",
     "githubPages": false,
     "categorizeByGroup": true,
     "cacheBust": true,
@@ -17,7 +17,8 @@
     "commentStyle": "jsdoc",
     "plugin": [
         "typedoc-plugin-markdown",
-        "typedoc-plugin-merge-modules"
+        "typedoc-vitepress-theme",
+        "typedoc-plugin-merge-modules",
     ],
     // ********************** //
     // Markdown Config
@@ -35,6 +36,10 @@
     "excludeScopesInPaths": true,
     "entryFileName": "index.md",
     "modulesFileName": "index",
+    // ********************** //
+    // Vitepress Config
+    // ********************** //
+    "docsRoot": "./docs",
     // ******************** //
     // Merge Modules Config
     // ******************** //
