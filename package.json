@@ -1,16 +1,22 @@
 {
-  "name": "sdk",
-  "version": "1.0.2",
+  "name": "token_batch_sdk",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "tsup ./src"
+    "build": "tsup ./src",
+    "docs": "typedoc"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "ethereum",
+    "erc20",
+    "batching",
+    "blockchain"
+  ],
+  "author": "aditya172926",
   "license": "ISC",
-  "description": "",
+  "description": "SDK for sending multiple transactions of ETH and ERC20 token transfers in a single batch transaction",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "jest": "^29.7.0",

@@ -1,4 +1,4 @@
-[**sdk v1.0.2**](../index.md) • **Docs**
+[**token_batch_sdk v1.0.3**](../index.md) • **Docs**
 
 ***
 

@@ -1,4 +1,4 @@
-[**sdk v1.0.2**](../index.md) • **Docs**
+[**token_batch_sdk v1.0.3**](../index.md) • **Docs**
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[types.ts:23](https://github.com/aditya172926/batching_eth/blob/359d80170976ec7536ec0aabe7bef1c485f788ab/src/types.ts#L23)
+[types.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/types.ts#L23)
 
 ***
 
@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[types.ts:22](https://github.com/aditya172926/batching_eth/blob/359d80170976ec7536ec0aabe7bef1c485f788ab/src/types.ts#L22)
+[types.ts:22](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/types.ts#L22)
 
 ***
 
@@ -44,4 +44,4 @@
 
 #### Defined in
 
-[types.ts:27](https://github.com/aditya172926/batching_eth/blob/359d80170976ec7536ec0aabe7bef1c485f788ab/src/types.ts#L27)
+[types.ts:27](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/types.ts#L27)

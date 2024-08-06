@@ -10,7 +10,6 @@
     ],
     "out": "docs",
     "githubPages": false,
-    // "readme": ".typedoc/api-readme.md",
     "categorizeByGroup": true,
     "cacheBust": true,
     "hideGenerator": true,
