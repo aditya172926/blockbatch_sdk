@@ -11,34 +11,37 @@ declare global {
     }
 }
 
+/**
+ * @hideconstructor
+ */
 export class BatchTransaction {
+    /**
+     * Provider used to interact with the network
+     * This is fetched directly if ethereum object is present in Window (being used in browser)
+     *
+     */
     provider: ethers.Provider | null;
+
+    /**
+     * Signer used as runner for executing smart contracts transactions
+     */
     signer: ethers.Signer | null;
+
+    /**
+     * Batch smart contract with methods for executing Batched ETH and ERC20 transfer transactions
+     */
     batchProcessingContract: ethers.Contract | null;
+
+    /**
+     * Parent Batch Smart Contract
+     * Used for aggregating all different transaction batches and executing in single transaction call.
+     */
     batchContract: ethers.Contract | null;
 
     constructor() {
-        /**
-         * Provider used to interact with the network
-         * This is fetched directly if ethereum object is present in Window (being used in browser)
-         *
-         */
         this.provider = null;
-
-        /**
-         * Signer used as runner for executing smart contracts transactions
-         */
         this.signer = null;
-
-        /**
-         * Batch smart contract with methods for executing Batched ETH and ERC20 transfer transactions
-         */
         this.batchProcessingContract = null;
-
-        /**
-         * Parent Batch Smart Contract
-         * Used for aggregating all different transaction batches and executing in single transaction call.
-         */
         this.batchContract = null;
     }
 

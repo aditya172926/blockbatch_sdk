@@ -1,8 +1,8 @@
-**token_batch_sdk v1.0.3** • **Docs**
+**Token Batch SDK v1.0.3** • **Docs**
 
 ***
 
-# token_batch_sdk v1.0.3
+# Token Batch SDK v1.0.3
 
 ## Classes
 
