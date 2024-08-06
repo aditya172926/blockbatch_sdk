@@ -1,9 +1,11 @@
 # Interface: Initializer
 
+Used for initializing the SDK. It enables the SDK to be used in both browser and node environment
+
 ## Properties
 
 | Property | Type | Defined in |
 | ------ | ------ | ------ |
-| `private_key?` | `string` | [types.ts:12](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L12) |
-| `provider?` | `Provider` | [types.ts:10](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L10) |
-| `signer?` | `Signer` | [types.ts:11](https://github.com/aditya172926/token_batch_sdk/blob/ea7ffc47fff2c40cf72e8969ba07b3834097afaa/src/types.ts#L11) |
+| `private_key?` | `string` | [types.ts:19](https://github.com/aditya172926/token_batch_sdk/blob/12dc19b29cb01a1648e7086fe30b09d794a6d59d/src/types.ts#L19) |
+| `provider?` | `Provider` | [types.ts:17](https://github.com/aditya172926/token_batch_sdk/blob/12dc19b29cb01a1648e7086fe30b09d794a6d59d/src/types.ts#L17) |
+| `signer?` | `Signer` | [types.ts:18](https://github.com/aditya172926/token_batch_sdk/blob/12dc19b29cb01a1648e7086fe30b09d794a6d59d/src/types.ts#L18) |
