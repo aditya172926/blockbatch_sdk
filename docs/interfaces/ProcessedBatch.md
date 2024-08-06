@@ -12,7 +12,7 @@
 
 #### Defined in
 
-[types.ts:35](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/types.ts#L35)
+[types.ts:35](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/types.ts#L35)
 
 ***
 
@@ -22,4 +22,4 @@
 
 #### Defined in
 
-[types.ts:36](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/types.ts#L36)
+[types.ts:36](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/types.ts#L36)

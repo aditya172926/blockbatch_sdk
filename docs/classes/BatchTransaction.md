@@ -16,7 +16,7 @@
 
 #### Defined in
 
-[execute.ts:20](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L20)
+[execute.ts:20](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L20)
 
 ## Properties
 
@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[execute.ts:18](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L18)
+[execute.ts:18](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L18)
 
 ***
 
@@ -36,7 +36,7 @@
 
 #### Defined in
 
-[execute.ts:17](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L17)
+[execute.ts:17](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L17)
 
 ***
 
@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[execute.ts:15](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L15)
+[execute.ts:15](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L15)
 
 ***
 
@@ -56,7 +56,7 @@
 
 #### Defined in
 
-[execute.ts:16](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L16)
+[execute.ts:16](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L16)
 
 ## Methods
 
@@ -76,7 +76,7 @@
 
 #### Defined in
 
-[execute.ts:192](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L192)
+[execute.ts:216](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L216)
 
 ***
 
@@ -96,13 +96,15 @@
 
 #### Defined in
 
-[execute.ts:178](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L178)
+[execute.ts:202](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L202)
 
 ***
 
 ### init()
 
 > **init**(`initialize`?): `Promise`\<`boolean`\>
+
+Initializes BatchTransaction class by performing setup operations for contracts and class variables
 
 #### Parameters
 
@@ -114,7 +116,7 @@
 
 #### Defined in
 
-[execute.ts:27](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L27)
+[execute.ts:51](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L51)
 
 ***
 
@@ -134,4 +136,4 @@
 
 #### Defined in
 
-[execute.ts:75](https://github.com/aditya172926/token_batch_sdk/blob/413310d1d58f08c5d6ce2f51e73bda377f904c79/src/execute.ts#L75)
+[execute.ts:99](https://github.com/aditya172926/token_batch_sdk/blob/299692e668ba7fb3ac20c4b072a7cd48139d2da6/src/execute.ts#L99)
