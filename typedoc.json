@@ -14,6 +14,7 @@
     "categorizeByGroup": true,
     "cacheBust": true,
     "hideGenerator": true,
+    "readme": "./README.md",
     "commentStyle": "jsdoc",
     "plugin": [
         "typedoc-plugin-markdown",
@@ -36,6 +37,7 @@
     "excludeScopesInPaths": true,
     "entryFileName": "index.md",
     "modulesFileName": "index",
+    "mergeReadme": true,
     // ********************** //
     // Vitepress Config
     // ********************** //
