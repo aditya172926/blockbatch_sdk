@@ -9,7 +9,7 @@
     "docs": "typedoc",
     "docs:dev": "vitepress dev docs",
     "docs:build": "npm run docs && vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "npm run docs:build && vitepress preview docs"
   },
   "keywords": [
     "ethereum",
@@ -34,6 +34,7 @@
     "vitepress": "^1.3.2"
   },
   "dependencies": {
+    "@changesets/cli": "^2.27.7",
     "ethers": "^6.13.2"
   }
 }

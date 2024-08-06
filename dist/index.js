@@ -588,9 +588,24 @@ var DEFAULT_GAS_LIMIT = 3e5;
 
 // src/execute.ts
 var BatchTransaction = class {
+  /**
+   * Provider used to interact with the network
+   * This is fetched directly if ethereum object is present in Window (being used in browser)
+   *
+   */
   provider;
+  /**
+   * Signer used as runner for executing smart contracts transactions
+   */
   signer;
+  /**
+   * Batch smart contract with methods for executing Batched ETH and ERC20 transfer transactions
+   */
   batchProcessingContract;
+  /**
+   * Parent Batch Smart Contract
+   * Used for aggregating all different transaction batches and executing in single transaction call.
+   */
   batchContract;
   constructor() {
     this.provider = null;
@@ -598,6 +613,12 @@ var BatchTransaction = class {
     this.batchProcessingContract = null;
     this.batchContract = null;
   }
+  /**
+   * Initializes BatchTransaction class by performing setup operations for contracts and class variables
+   * 
+   * @param initialize - optional in Browser if ethereum object present. Required in Node env to pass provider, signer or private key.
+   * @returns true if successful
+   */
   async init(initialize) {
     const setup = await this.setup(initialize);
     if (setup) {
@@ -644,6 +665,14 @@ var BatchTransaction = class {
       throw new Error(error);
     }
   }
+  /**
+   * Function to process the ETH and ERC20 batch transactions
+   * 
+   * @param batchData - User prepared raw transaction array of {BatchData} type
+   * @param gasPrice - Optional param if you want to send current gasPrice for this transaction.
+   * 
+   * @returns Promise<{ txn: ethers.TransactionResponse, invalidTxns: InvalidTransactions[] } | InvalidTransactions[]>
+   */
   async processBatchTransactions(batchData, gasPrice = null) {
     try {
       let ethBatch = {
@@ -734,6 +763,18 @@ var BatchTransaction = class {
       throw new Error(error);
     }
   }
+  /**
+   * Function to generate transaction data of only batch transactions of ETH transfers
+   *
+   * @param ethBatch - takes an array of `recipients` address and corresponding array of ETH amount to transfer to each recipient
+   * @param totalEthAmount - Total amount of ETH that the spender is going to transfer
+   * 
+   * @remarks
+   * This function is called internally by `processBatchTransaction`, but is also exported from the class for the 
+   * users to generate the calldata of their batch transactions to use it for their own.
+   * 
+   * @returns Populated ETH Batch transaction calldata of the smart contract call.
+   */
   async executeEthBatch(ethBatch, totalEthAmount) {
     if (!this.batchProcessingContract)
       throw new Error("SDK not initialized properly. Call init() method");
@@ -747,6 +788,18 @@ var BatchTransaction = class {
       throw new Error(error);
     }
   }
+  /**
+   * Function to generate transaction data of only batch transactions of ERC20 transfers
+   * 
+   * @param erc20Batch - takes an array of `recipients` address and corresponding array of ERC20 token address and amounts to transfer to each recipient
+   * @param allowanceAmount - total `bigint` amount of respective ERC20 tokens to be approved for `batchProcessingContract` to transfer
+   * 
+   * @remarks
+   * This function is called internally by `processBatchTransaction`, but is also exported from the class for the 
+   * users to generate the calldata of their batch transactions to use it for their own.
+   * 
+   * @returns Populated ERC20 Batch transaction calldata of the smart contract call.
+   */
   async executeERC20Batch(erc20Batch, allowanceAmount) {
     if (!this.batchProcessingContract)
       throw new Error("SDK not initialized properly. Call init() method");

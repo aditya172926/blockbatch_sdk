@@ -2,6 +2,8 @@
 
 Token Batch SDK is used for sending multiple ETH and ERC20 tokens in a single Batch Transaction.
 
+## Installation
+
 ## Classes
 
 - [BatchTransaction](classes/BatchTransaction.md)
