@@ -70,7 +70,7 @@ describe("executeEthBatch", () => {
         await expect(batchsdk.processBatchTransactions(ethBatch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
-    test("throw error if invalid recipient address provided", async() => {
+    test("return list of invalid ETH transactions", async() => {
         const mockETHBatch: BatchData[] =  [
             {
                 recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be",
@@ -84,8 +84,6 @@ describe("executeEthBatch", () => {
         const batchsdk = await initBatchSDK();
         await expect(batchsdk.processBatchTransactions(mockETHBatch)).resolves.toHaveLength(2);
     });
-
-
 });
 
 describe("executeERC20Batch", () => {
@@ -102,7 +100,7 @@ describe("executeERC20Batch", () => {
         }
     ];
 
-    test('should return TransactionResponse on successful ERC20 token transfer', async() => {
+    test('return TransactionResponse on successful ERC20 token transfer and list of all invalid transactions', async() => {
         const batchsdk = await initBatchSDK();
         await expect(batchsdk.processBatchTransactions(erc20Batch)).resolves.toHaveProperty('txn');
     });
@@ -112,7 +110,7 @@ describe("executeERC20Batch", () => {
         await expect(batchsdk.processBatchTransactions(erc20Batch)).rejects.toThrow("SDK not initialized properly. Call init() method");
     });
 
-    test("throw error if invalid recipient address provided", async() => {
+    test("return list of invalid ERC20 transactions", async() => {
         const mockErc20Batch: BatchData[] =  [
             {
                 recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293Be",
