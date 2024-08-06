@@ -35,3 +35,8 @@ export interface ProcessedBatch {
     erc20: ethers.ContractTransaction | null,
     eth: ethers.ContractTransaction | null
 }
+
+export interface InvalidTransactions {
+    message: string,
+    batchData: BatchData
+}

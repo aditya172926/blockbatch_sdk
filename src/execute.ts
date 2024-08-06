@@ -1,9 +1,9 @@
 import { ethers, toBigInt } from "ethers";
+import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
 import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
 import { BATCH_CONTRACT_ADDRESS, BATCH_PROCESS_CONTRACT_ADDRESS, DEFAULT_GAS_LIMIT } from "./constants";
-import { BatchData, BatchTransactionParams, ERC20Batch, ETHBatch, Initializer, ProcessedBatch, TokenAllowance } from "./types";
-import { BATCH_CONTRACT_ABI } from "./abi/BatchContract.abi";
+import { BatchData, BatchTransactionParams, ERC20Batch, ETHBatch, Initializer, InvalidTransactions, ProcessedBatch, TokenAllowance } from "./types";
 
 declare global {
     interface Window {
@@ -72,7 +72,10 @@ export class BatchTransaction {
         }
     }
 
-    async processBatchTransactions(batchData: BatchData[]): Promise<ethers.TransactionResponse> {
+    async processBatchTransactions(
+        batchData: BatchData[],
+        gasPrice: bigint | null = null
+    ): Promise<{ txn: ethers.TransactionResponse, invalidTxns: InvalidTransactions[] } | InvalidTransactions[]> {
         try {
             let ethBatch: ETHBatch = {
                 recipients: [],
@@ -86,13 +89,22 @@ export class BatchTransaction {
 
             let totalEthAmount = BigInt(0);
             let allowanceAmount: TokenAllowance = {};
+            let invalidTxns: InvalidTransactions[] = [];
 
             for (let batch of batchData) {
-                if (!ethers.isAddress(batch.recipient))
-                    throw new Error(`Invalid recipient address provided ${batch.recipient}`);
+                if (!ethers.isAddress(batch.recipient)) {
+                    invalidTxns.push({ message: `Invalid recipient address provided ${batch.recipient}`, batchData: batch });
+                    continue;
+                }
                 if (batch.tokenAddress) { // batching erc20
-                    if (!ethers.isAddress(batch.tokenAddress))
-                        throw new Error(`Invalid token address provided ${batch.tokenAddress}`);
+                    if (!ethers.isAddress(batch.tokenAddress)) {
+                        invalidTxns.push({
+                            message: `Invalid token address provided ${batch.tokenAddress}`,
+                            batchData: batch
+                        });
+                        continue;
+                    }
+
                     erc20Batch.recipients.push(batch.recipient);
                     erc20Batch.amounts.push(BigInt(batch.amount));
                     erc20Batch.tokens.push(batch.tokenAddress);
@@ -107,6 +119,9 @@ export class BatchTransaction {
                     totalEthAmount += ethers.parseEther(batch.amount);
                 }
             }
+
+            if (ethBatch.recipients.length == 0 && erc20Batch.recipients.length == 0)
+                return invalidTxns;
 
             let response: ProcessedBatch = {
                 erc20: null,
@@ -141,7 +156,7 @@ export class BatchTransaction {
                 batchTxnParams.to.push(response.eth.to);
                 totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
             }
-            
+
             const txnData = await this.batchContract?.sendBatchTransactions.populateTransaction(
                 batchTxnParams.data,
                 batchTxnParams.to,
@@ -150,9 +165,9 @@ export class BatchTransaction {
             );
             if (txnData) {
                 const gasLimit = await this.estimateBatchGas(txnData);
-                const txn = await this.sendTransaction(txnData, gasLimit);
+                const txn = await this.sendTransaction(txnData, gasLimit, gasPrice); // this is gasPrice
                 await txn.wait();
-                return txn;
+                return { txn, invalidTxns };
             }
             throw new Error("Transaction failed. Failed to generate batch Transaction Data");
         } catch (error: any) {
@@ -211,22 +226,25 @@ export class BatchTransaction {
 
     private async estimateBatchGas(transactionData: ethers.ContractTransaction) {
         try {
-            const estimatedGas = await this.signer?.estimateGas(transactionData);
-            if (estimatedGas)
-                return estimatedGas;
+            const gasLimit = await this.signer?.estimateGas(transactionData);
+            if (gasLimit) {
+                return gasLimit;
+            }
             throw new Error("Gas Estimation failed");
         } catch (error) {
             return BigInt(DEFAULT_GAS_LIMIT);
         }
     }
 
-    private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint): Promise<ethers.TransactionResponse> {
+    private async sendTransaction(transactionData: ethers.ContractTransaction, gasLimit: bigint, gasPrice: bigint | null): Promise<ethers.TransactionResponse> {
         try {
+            const gasFees = gasPrice ? gasLimit * gasPrice : null
             const txn = await this.signer?.sendTransaction({
                 to: transactionData.to,
                 data: transactionData.data,
                 value: transactionData.value,
-                gasLimit: gasLimit
+                gasLimit,
+                gasPrice: gasFees
             });
             if (txn?.hash)
                 return txn;
