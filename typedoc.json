@@ -31,7 +31,7 @@
     "typeDeclarationFormat": "table",
     "parametersFormat": "table",
     "interfacePropertiesFormat": "table",
-    "classPropertiesFormat": "table",
+    "classPropertiesFormat": "htmlTable",
     "excludeScopesInPaths": true,
     "entryFileName": "index.md",
     "modulesFileName": "index",

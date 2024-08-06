@@ -12,5 +12,5 @@
 
 | Property | Type | Defined in |
 | ------ | ------ | ------ |
-| `amounts` | `BigInt`[] | [types.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/56726a79cc25b23d56d020ebc05b9e52e0c44b4b/src/types.ts#L23) |
-| `recipients` | `string`[] | [types.ts:22](https://github.com/aditya172926/token_batch_sdk/blob/56726a79cc25b23d56d020ebc05b9e52e0c44b4b/src/types.ts#L22) |
+| `amounts` | `BigInt`[] | [types.ts:23](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/types.ts#L23) |
+| `recipients` | `string`[] | [types.ts:22](https://github.com/aditya172926/token_batch_sdk/blob/b7e1fa0d45583614fc51d6ec9f8fbab5c6647fcb/src/types.ts#L22) |
