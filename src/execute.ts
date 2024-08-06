@@ -1,4 +1,3 @@
-// module to execute batch transactions
 import { ethers, toBigInt } from "ethers";
 import { BATCH_PROCESS_ABI } from "./abi/BatchTransferContract.abi";
 import { erc20Abi } from "./abi/Token.abi";
@@ -17,15 +16,6 @@ export class BatchTransaction {
     signer: ethers.Signer | null;
     batchProcessingContract: ethers.Contract | null;
     batchContract: ethers.Contract | null;
-
-    /**
-     * Stuff this class can do so far
-     * Send ETH in batch transactions
-     * Send ERC20 in batch transactions
-     * Send multi erc20 tokens in batch transactions
-     * Estimate gas for batch transactions - gas fees for slow, medium and fast transactions remaining
-     * 
-     */
 
     constructor() {
         this.provider = null;
@@ -123,8 +113,6 @@ export class BatchTransaction {
                 eth: null
             };
 
-            // TODO: These are 2 separate transactions. 1 for ETH and 1 for ERC20. Find a way to make it single
-            // the above todo is fixed: Test it throughly
             if (ethBatch.recipients.length > 0) {
                 const ethBatchTransactionData = await this.executeEthBatch(ethBatch, totalEthAmount);
                 response["eth"] = ethBatchTransactionData;
@@ -133,21 +121,14 @@ export class BatchTransaction {
                 const erc20BatchTransactionData = await this.executeERC20Batch(erc20Batch, allowanceAmount);
                 response["erc20"] = erc20BatchTransactionData;
             }
-            /**
-             * Requirements to send batch transaction
-             * erc20, eth batch txn data
-             * contract address to send the txn to
-             * values of eth to send with the txn
-             */
 
-            // const totalEthValue = BigInt(response.erc20?.value!) + BigInt(response.eth?.value!);
             let totalEthValue = BigInt(0);
             let batchTxnParams: BatchTransactionParams = {
                 data: [],
                 values: [],
                 to: []
             }
-        
+
             if (response.erc20) {
                 batchTxnParams.data.push(response.erc20.data);
                 batchTxnParams.values.push(response.erc20.value ? response.erc20.value : BigInt(0))
@@ -162,19 +143,18 @@ export class BatchTransaction {
                 totalEthValue += response.eth.value ? response.eth.value : BigInt(0);
             }
 
-            console.log("Response transaction data ", batchTxnParams);
-
-            const txn = await this.batchContract?.sendBatchTransactions(
+            const txnData = await this.batchContract?.sendBatchTransactions.populateTransaction(
                 batchTxnParams.data,
                 batchTxnParams.to,
                 batchTxnParams.values,
-                {value: totalEthValue}
+                { value: totalEthValue }
             );
-
-            console.log("Transaction ==> ", txn);
+            if (txnData) {
+                const gasLimit = await this.estimateBatchGas(txnData);
+                const txn = await this.sendTransaction(txnData, gasLimit)
+            }
 
             return response;
-
         } catch (error: any) {
             throw new Error(error);
         }
@@ -237,8 +217,8 @@ export class BatchTransaction {
             const address = await this.signer?.getAddress();
             const allowance = await erc20Contract.allowance(address, spender);
             return allowance;
-        } catch (error) {
-            console.log(error);
+        } catch (error: any) {
+            throw new Error(error);
         }
     }
 

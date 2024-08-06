@@ -1,9 +1,11 @@
 {
   "name": "sdk",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "1.0.2",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsup ./src"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +16,7 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.2.4",
     "ts-node": "^10.9.2",
+    "tsup": "^8.2.4",
     "typescript": "^5.5.4"
   },
   "dependencies": {
