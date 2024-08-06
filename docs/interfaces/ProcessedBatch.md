@@ -12,7 +12,7 @@
 
 #### Defined in
 
-[types.ts:35](https://github.com/aditya172926/batching_eth/blob/10726dea18f0dc502053946db34a4d893b011b64/src/types.ts#L35)
+[types.ts:35](https://github.com/aditya172926/batching_eth/blob/359d80170976ec7536ec0aabe7bef1c485f788ab/src/types.ts#L35)
 
 ***
 
@@ -22,4 +22,4 @@
 
 #### Defined in
 
-[types.ts:36](https://github.com/aditya172926/batching_eth/blob/10726dea18f0dc502053946db34a4d893b011b64/src/types.ts#L36)
+[types.ts:36](https://github.com/aditya172926/batching_eth/blob/359d80170976ec7536ec0aabe7bef1c485f788ab/src/types.ts#L36)
