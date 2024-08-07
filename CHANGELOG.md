@@ -1,5 +1,11 @@
 # token_batch_sdk
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated readme with warnings, important data and notes. Added comments to constants
+
 ## 1.0.6
 
 ### Patch Changes
