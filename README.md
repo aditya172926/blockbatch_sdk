@@ -21,20 +21,68 @@ const init = await batchSender.init();
 ```
 
 ## Sending Batch Transaction
+
+### Creating ETH Batch data
+To create a batch transaction data for just ETH transfers, provide the `recipient` address and `amount` to transfer, without any `tokenAddress`.
+
 ```
+// ETH transactions
+const batchData: BatchData[] = [
+    {
+      recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      amount: "0.01"
+    },
+    {
+      recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      amount: "0.02"
+    },
+]
+```
+
+If `tokenAddress` is provided the transaction is going to be considered for ERC20 batch by the SDK.
+
+```
+// ERC20 transactions
 const batchData: BatchData[] = [
       {
         recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        amount: "0.01"
+        amount: "1000000",
+        tokenAddress: "0x857616Fbc511212A2a848dA64B4fC3b9678af6F9"
       },
       {
         recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
         amount: "10",
         tokenAddress: "0x857616Fbc511212A2a848dA64B4fC3b9678af6F9"
       }
-    ];
-const txn = await batch.processBatchTransactions(batchData);
+  ];
 ```
+
+You can add all of your ETH/ERC20 transactions in a single BatchData array. The SDK handles to process them in a single batch internally.
+```
+// ERC20 transactions
+const batchData: BatchData[] = [
+      // ETH transaction
+      {
+        recipient: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        amount: "0.01",
+      },
+      // ERC20 transaction
+      {
+        recipient: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        amount: "10",
+        tokenAddress: "0x857616Fbc511212A2a848dA64B4fC3b9678af6F9"
+      }
+  ];
+```
+
+Call the `processBatchTransactions()` and pass it the batchData to execute the transactions prepared.
+```
+const response = await batch.processBatchTransactions(batchData);
+console.log(`Transaction response ${response?.txn}`);
+```
+
+> The `response` object can contain data of the type of `{ txn: ethers.TransactionResponse, invalidTxns: InvalidTransactions[] }` or just `InvalidTransactions[]`. The invalid transactions array contains the data of those transactions in the processed batch which are invalid.
+So even if 3 out of 10 transactions might have error in them, the valid 7 transactions will execute.
 
 ## System Support
 
