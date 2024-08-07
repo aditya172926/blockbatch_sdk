@@ -122,6 +122,8 @@ Its always better to not share your private key. The SDK doesn't store any of th
 - Batch Transfer Contract - 0x7FD154df41ec41336A86Ee53a3F7Fe886E80Efc7
 - Parent Batching Contract - 0xb8cBB6a9965A851Dcb88Bb1734231c531a0bcdF1
 
+Smart Contracts used Repository - https://github.com/aditya172926/batching_eth_contract
+
 Smart Contracts are deployed on Ethereum Sepolia Testnet
 
 ## Transaction on Sepolia
