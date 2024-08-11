@@ -202,7 +202,7 @@ export class BatchTransaction {
                 const gasLimit = await this.estimateBatchGas(txnData);
                 const txn = await this.sendTransaction(txnData, gasLimit, gasPrice); // this is gasPrice
                 const receipt = await txn.wait();
-                const link = this.getTxnLink(receipt?.hash);
+                const link = this.getTxnLink(txn.hash);
                 return { txn, invalidTxns, link };
             }
             throw new Error("Transaction failed. Failed to generate batch Transaction Data");
@@ -273,6 +273,7 @@ export class BatchTransaction {
     }
 
     getTxnLink(hash?: string) {
+        console.log("Transaction hash", hash);
         if (!hash)
             return null;
         return `${BLOCKSCOUT_EXPLORER}/transactions/${hash}`;
