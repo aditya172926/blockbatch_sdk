@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@changesets/cli": "^2.27.7",
+    "axios": "^1.7.3",
     "ethers": "^6.13.2"
   }
 }
