@@ -1,5 +1,11 @@
 # token_batch_sdk
 
+## 1.0.8
+
+### Patch Changes
+
+- Added link for blockscout explorer to see transaction and added verified smart contract addrs
+
 ## 1.0.7
 
 ### Patch Changes
