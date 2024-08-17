@@ -1,5 +1,11 @@
 # token_batch_sdk
 
+## 1.0.10
+
+### Patch Changes
+
+- Renamed SDK to blockbatch
+
 ## 1.0.9
 
 ### Patch Changes
