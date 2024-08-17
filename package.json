@@ -1,5 +1,5 @@
 {
-  "name": "token_batch_sdk",
+  "name": "blockbatch",
   "version": "1.0.9",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

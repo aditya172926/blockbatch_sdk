@@ -3,7 +3,7 @@ import typedocSidebar from '../sdk/typedoc-sidebar.json';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Token Batch SDK",
+  title: "BlockBatch SDK",
   description: "SDK for sending ETH and ERC20 tokens in a single Batch transaction",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
@@ -20,7 +20,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/aditya172926/token_batch_sdk' }
+      { icon: 'github', link: 'https://github.com/aditya172926/blockbatch_sdk' }
     ]
   }
 })

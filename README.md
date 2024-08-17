@@ -1,6 +1,6 @@
-# Token Batch SDK
+# BlockBatch SDK
 
-Token Batch SDK is used for sending multiple ETH and ERC20 tokens in a single Batch Transaction.
+BlockBatch SDK is used for sending multiple ETH and ERC20 tokens in a single Batch Transaction.
 
 ## Docs
 Read further about SDK classes and methods [here](https://token-batch-sdk.vercel.app/)
@@ -10,14 +10,14 @@ Try out the SDK demo in this [code sandbox](https://codesandbox.io/p/github/adit
 
 ## Installation
 ```
-npm i token_batch_sdk
+npm i blockbatch
 ```
 
 ## Import
 Sample use of the SDK
 
 ```
-import { BatchTransaction } from "token_batch_sdk";
+import { BatchTransaction } from "blockbatch";
 
 const batchSender = new BatchTransaction();
 const init = await batchSender.init();

@@ -3,7 +3,7 @@
 layout: home
 
 hero:
-  name: "Token Batch SDK"
+  name: "BlockBatch SDK"
   text: "SDK for sending ETH and ERC20 tokens in a single Batch transaction"
   actions:
     - theme: brand
