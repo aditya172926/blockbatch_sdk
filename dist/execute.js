@@ -580,9 +580,10 @@ var erc20Abi = [
 ];
 
 // src/constants.ts
-var BATCH_PROCESS_CONTRACT_ADDRESS = "0x7FD154df41ec41336A86Ee53a3F7Fe886E80Efc7";
-var BATCH_CONTRACT_ADDRESS = "0xb8cBB6a9965A851Dcb88Bb1734231c531a0bcdF1";
+var BATCH_PROCESS_CONTRACT_ADDRESS = "0xd7aeb1fCACBC7fc2C34A27d71B61DbBe043aC97E";
+var BATCH_CONTRACT_ADDRESS = "0x909e24D7e79F45937705e8A8899aa52255bB3E1F";
 var DEFAULT_GAS_LIMIT = 3e5;
+var BLOCKSCOUT_EXPLORER = "https://eth-sepolia.blockscout.com/tx";
 
 // src/execute.ts
 var BatchTransaction = class {
@@ -753,8 +754,9 @@ var BatchTransaction = class {
       if (txnData) {
         const gasLimit = await this.estimateBatchGas(txnData);
         const txn = await this.sendTransaction(txnData, gasLimit, gasPrice);
-        await txn.wait();
-        return { txn, invalidTxns };
+        const receipt = await txn.wait();
+        const link = this.getTxnLink(txn.hash);
+        return { txn, invalidTxns, link };
       }
       throw new Error("Transaction failed. Failed to generate batch Transaction Data");
     } catch (error) {
@@ -816,6 +818,12 @@ var BatchTransaction = class {
     } catch (error) {
       throw new Error(error);
     }
+  }
+  getTxnLink(hash) {
+    console.log("Transaction hash", hash);
+    if (!hash)
+      return null;
+    return `${BLOCKSCOUT_EXPLORER}/transactions/${hash}`;
   }
   async erc20Approval(token, spender, amount) {
     try {

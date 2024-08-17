@@ -3,7 +3,7 @@
     // TypeDoc Config
     // ************** //
     "$schema": "https://typedoc.org/schema.json",
-    "name": "Token Batch SDK",
+    "name": "BlockBatch SDK",
     "includeVersion": true,
     "entryPointStrategy": "resolve",
     "entryPoints": [
