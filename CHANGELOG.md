@@ -1,5 +1,11 @@
 # token_batch_sdk
 
+## 1.0.9
+
+### Patch Changes
+
+- Updated axios version to 1.7.4 mitigating the security vulnerability via SSRF in v1.7.3
+
 ## 1.0.8
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "token_batch_sdk",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@changesets/cli": "^2.27.7",
-    "axios": "^1.7.3",
+    "axios": "^1.7.4",
     "ethers": "^6.13.2"
   }
 }
